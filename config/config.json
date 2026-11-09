@@ -1,0 +1,37 @@
+{
+  "hotkeys": {
+    "draw_fixed": "<alt>+d",
+    "draw_vanishing": "<alt>+v",
+    "eraser": "<alt>+e",
+    "clear_all": "<alt>+c",
+    "undo": "<cmd>+z",
+    "open_config": "<alt>+p"
+  },
+  "drawing": {
+    "stroke_width": 4,
+    "active_color": "#00FF87",
+    "neon_glow": true,
+    "neon_intensity": 0.75,
+    "vanishing_duration": 2.0,
+    "fadeout_speed": 0.6,
+    "shape_recognition": true,
+    "shape_confidence_threshold": 0.88,
+    "cursor_dot": true,
+    "cursor_dot_size": 10
+  },
+  "palette": [
+    "#00FF87",
+    "#00A859",
+    "#9B6E28",
+    "#00E5FF",
+    "#2979FF",
+    "#E0E0E0",
+    "#FF1493",
+    "#FFEA00",
+    "#FF3D00"
+  ],
+  "system": {
+    "start_at_login": false,
+    "fps_limit": 60
+  }
+}
