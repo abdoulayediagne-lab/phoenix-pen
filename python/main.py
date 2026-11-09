@@ -92,6 +92,9 @@ class PhoenixPenApp:
 
     def _set_mode(self, target_mode: str) -> None:
         """Toggles drawing mode and updates visual state of HUD."""
+        if self.config_dialog and self.config_dialog.isVisible():
+            self.config_dialog.hide()
+
         if self.overlay.mode == target_mode:
             self.overlay.set_mode(MODE_CLICK_THROUGH)
             self.hud.set_active_mode(MODE_CLICK_THROUGH)
@@ -120,15 +123,16 @@ class PhoenixPenApp:
             self._set_mode(MODE_CLICK_THROUGH)
 
     def open_config(self) -> None:
-        if not self.config_dialog or not self.config_dialog.isVisible():
+        if self.overlay.mode != MODE_CLICK_THROUGH:
+            self._set_mode(MODE_CLICK_THROUGH)
+        if not self.config_dialog:
             self.config_dialog = ConfigWindow(self.config_mgr)
             self.config_dialog.finished.connect(self._on_config_closed)
-            self.config_dialog.show()
-            self.config_dialog.raise_()
-            self.config_dialog.activateWindow()
+        self.config_dialog.show()
+        self.config_dialog.raise_()
+        self.config_dialog.activateWindow()
 
     def _on_config_closed(self) -> None:
-        self.hotkeys.reload()
         if self.config_mgr.get("system", "floating_hud", True):
             self._position_hud()
         else:

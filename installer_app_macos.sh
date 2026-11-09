@@ -47,7 +47,7 @@ cat << 'EOF' > "$DESKTOP_APP/Contents/Info.plist"
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>LSUIElement</key>
-    <string>0</string>
+    <string>1</string>
     <key>LSArchitecturePriority</key>
     <array>
         <string>arm64</string>

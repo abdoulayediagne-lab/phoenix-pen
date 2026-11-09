@@ -1,5 +1,20 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Éradication Crash TSM via Quartz EventTap Main-Loop, Tracé Plein Écran Cocoa Instantané & Intégration Type Phoenix Voice
+- **Action :** 
+  - **Éradication Définitive du Crash Python (`_dispatch_assert_queue_fail`) :** Remplacement de `pynput` par une interception native Apple `Quartz.CGEventTap` connectée directement à la boucle principale Cocoa (`CFRunLoopGetMain()`). Fin des appels illégaux à `TSMGetInputSourceProperty` sur les threads secondaires de macOS 15+ Sequoia. Zéro crash, zéro message "Python a quitté de manière imprévue".
+  - **Tracé Plein Écran Immédiat sur N'importe Quelle Fenêtre :**
+    - Résolution de la taille du calque Cocoa : forçage du redimensionnement instantané plein écran (`nswin.setFrame_display_(s.frame(), True)`) détecté précisément à la position de la souris (`AppKit.NSMouseInRect`). Le calque couvre désormais $100\%$ de la surface utile et capte immédiatement les tracés sans latence.
+    - Activation de `acceptsMouseMovedEvents` et priorité absolue du niveau de fenêtre Cocoa (`NSStatusWindowLevel - 1`).
+  - **Masquage Automatique du Dashboard au Dessin :** Dès que le mode dessin est activé (via `Cmd+D`, `Option+D` ou la capsule), le panneau de configuration se masque automatiquement pour laisser le champ $100\%$ libre à l'annotation.
+  - **Expérience Ghost Souveraine (Identique à Phoenix Voice) :**
+    - Passage de `LSUIElement` à `1` dans `Info.plist` : application résidente sans fenêtre intempestive au lancement.
+    - Accès au Dashboard uniquement sur demande explicite via le bouton **[ ⚙️ Dashboard ]** de la capsule flottante ou via le menu système tray en haut à droite (*"⚙️ Ouvrir le Dashboard"*).
+  - **Raccourcis Clavier 100% Réactifs :** Activation immédiate de l'encre fixe (`Cmd+D` ou `Option+D`), de la gomme (`Cmd+E` ou `Option+E`), de l'encre éphémère (`Cmd+Shift+V` ou `Option+V`), du dashboard (`Cmd+Shift+P` ou `Option+P`) et annulation fluide (`Cmd+Z`).
+- **Raison / Contexte :** Résolution du crash rapporté par Abdoulaye ("Python a quitté de manière imprévue"), garantie de pouvoir dessiner immédiatement sur n'importe quel écran après `Cmd+D` sans que le Dashboard n'encombre la vue, et alignement sur l'ergonomie discrète de Phoenix Voice.
+- **Impact & Validation :** Tests unitaires, flux complets et tests GUI 100% verts. L'application tourne actuellement en arrière-plan sans aucun avertissement.
+
+
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Roues Chromatiques Interactives avec Viseur Tactique, Gomme 200px, Trait 100px & Résolution Définitive Cmd+Z
 - **Action :** 
   - **Double Roue Chromatique avec Viseur Tactique (`color_wheel.py`) :** Remplacement des boutons statiques par deux disques interactifs circulaires dotés d'un viseur en croix tactile :

@@ -49,17 +49,24 @@ class OverlayWindow(QWidget):
         if self.mode in (MODE_DRAW_FIXED, MODE_DRAW_VANISHING):
             c = self.config_mgr.get("drawing", "active_color", "#00FF87")
             qcur, pix = self._create_neon_cursor(c)
-            while QApplication.overrideCursor() is not None:
-                QApplication.restoreOverrideCursor()
-            QApplication.setOverrideCursor(qcur)
-            self.setCursor(qcur)
-            self._apply_cocoa_cursor(pix)
+            while QApplication.overrideCursor() is not None: QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(qcur); self.setCursor(qcur); self._apply_cocoa_cursor(pix)
         self.update()
 
     def _adapt_to_active_screen(self) -> None:
         screen = QGuiApplication.screenAt(QCursor.pos()) or QGuiApplication.primaryScreen()
         if screen:
             self.setGeometry(screen.geometry())
+            if sys.platform == "darwin":
+                try:
+                    import AppKit, objc
+                    nswin = objc.objc_object(c_void_p=int(self.winId())).window()
+                    if nswin is not None:
+                        pt = AppKit.NSEvent.mouseLocation()
+                        for s in AppKit.NSScreen.screens():
+                            if AppKit.NSMouseInRect(pt, s.frame(), False):
+                                nswin.setFrame_display_(s.frame(), True); break
+                except Exception: pass
 
     def _set_native_click_through(self, ignore: bool) -> None:
         if sys.platform == "darwin":
@@ -73,19 +80,16 @@ class OverlayWindow(QWidget):
                     if ignore:
                         nswin.setLevel_(AppKit.NSFloatingWindowLevel)
                     else:
-                        nswin.setLevel_(AppKit.NSStatusWindowLevel - 1)
-                        nswin.makeKeyAndOrderFront_(None)
-                        nswin.orderFrontRegardless()
+                        nswin.setAcceptsMouseMovedEvents_(True); nswin.setLevel_(AppKit.NSStatusWindowLevel - 1)
+                        nswin.makeKeyAndOrderFront_(None); nswin.orderFrontRegardless()
                         AppKit.NSRunningApplication.currentApplication().activateWithOptions_(AppKit.NSApplicationActivateIgnoringOtherApps)
                         nswin.invalidateCursorRectsForView_(view)
             except Exception as e:
                 print(f"[OverlayWindow] macOS click-through warning: {e}")
 
     def _create_neon_cursor(self, color_hex: str) -> Tuple[QCursor, QPixmap]:
-        pix = QPixmap(32, 32)
-        pix.fill(Qt.GlobalColor.transparent)
-        p = QPainter(pix)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        pix = QPixmap(32, 32); pix.fill(Qt.GlobalColor.transparent)
+        p = QPainter(pix); p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         base = QColor(color_hex) if QColor(color_hex).isValid() else QColor("#00FF87")
         glow = QColor(base); glow.setAlpha(140)
         p.setPen(QPen(glow, 4.0)); p.drawEllipse(4, 4, 24, 24)

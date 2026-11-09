@@ -84,7 +84,7 @@ class TrayApp(QSystemTrayIcon):
 
         menu.addSeparator()
 
-        act_cfg = QAction("⚙️ Configuration...", menu)
+        act_cfg = QAction("⚙️ Ouvrir le Dashboard", menu)
         act_cfg.triggered.connect(on_config)
         menu.addAction(act_cfg)
 
