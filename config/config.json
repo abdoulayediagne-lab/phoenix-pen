@@ -8,8 +8,9 @@
     "open_config": "<alt>+p"
   },
   "drawing": {
-    "stroke_width": 5,
-    "active_color": "#FFEA00",
+    "stroke_width": 24,
+    "eraser_width": 70,
+    "active_color": "#F472B6",
     "neon_glow": true,
     "neon_intensity": 0.75,
     "vanishing_duration": 2.0,
@@ -19,6 +20,28 @@
     "cursor_dot": true,
     "cursor_dot_size": 10
   },
+  "palette_essential": [
+    "#00FF87",
+    "#00A859",
+    "#00E5FF",
+    "#2979FF",
+    "#FF3D00",
+    "#FF1493",
+    "#FFEA00",
+    "#A855F7",
+    "#FFFFFF"
+  ],
+  "palette_metallic": [
+    "#FFD700",
+    "#E5A93C",
+    "#C59B27",
+    "#E2E8F0",
+    "#CBD5E1",
+    "#38BDF8",
+    "#F472B6",
+    "#FB923C",
+    "#10B981"
+  ],
   "palette": [
     "#00FF87",
     "#00A859",
@@ -33,6 +56,7 @@
   "system": {
     "start_at_login": false,
     "fps_limit": 60,
-    "floating_hud": true
+    "floating_hud": true,
+    "open_dashboard_at_start": false
   }
 }

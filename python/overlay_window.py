@@ -42,7 +42,19 @@ class OverlayWindow(QWidget):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setMouseTracking(True)
+        self.config_mgr.add_listener(self._on_config_changed)
         self.set_mode(MODE_CLICK_THROUGH)
+
+    def _on_config_changed(self, cfg: dict) -> None:
+        if self.mode in (MODE_DRAW_FIXED, MODE_DRAW_VANISHING):
+            c = self.config_mgr.get("drawing", "active_color", "#00FF87")
+            qcur, pix = self._create_neon_cursor(c)
+            while QApplication.overrideCursor() is not None:
+                QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(qcur)
+            self.setCursor(qcur)
+            self._apply_cocoa_cursor(pix)
+        self.update()
 
     def _adapt_to_active_screen(self) -> None:
         screen = QGuiApplication.screenAt(QCursor.pos()) or QGuiApplication.primaryScreen()
@@ -134,6 +146,16 @@ class OverlayWindow(QWidget):
 
     def clear_all(self) -> None:
         self.permanent_strokes.clear(); self.undo_stack.clear(); self.fade_manager.clear(); self.update()
+
+    def keyPressEvent(self, event: Any) -> None:
+        if event.key() == Qt.Key.Key_Escape:
+            self.set_mode(MODE_CLICK_THROUGH)
+            event.accept()
+        elif event.key() in (Qt.Key.Key_Z, Qt.Key.Key_W) and (event.modifiers() & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.MetaModifier)):
+            self.undo()
+            event.accept()
+        else:
+            super().keyPressEvent(event)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:

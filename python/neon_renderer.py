@@ -15,6 +15,34 @@ METALLIC_SHADES = {
 }
 
 
+def is_metallic_color(color_hex: str) -> bool:
+    """Detects whether a color is metallic (gold, bronze, silver, copper, etc.)."""
+    if not color_hex:
+        return False
+    u = color_hex.upper()
+    if u in METALLIC_SHADES:
+        return True
+    qc = QColor(color_hex)
+    if not qc.isValid():
+        return False
+    h = qc.hsvHue()
+    s = qc.hsvSaturationF()
+    v = qc.valueF()
+    # Gold & Bronze
+    if 25 <= h <= 65 and v >= 0.55:
+        return True
+    # Silver & Chrome (low saturation, high brightness)
+    if s <= 0.28 and v >= 0.70:
+        return True
+    # Rose Gold & Copper
+    if (h >= 340 or h <= 25) and 0.15 <= s <= 0.65 and v >= 0.65:
+        return True
+    # Titanium Blue
+    if 190 <= h <= 215 and 0.20 <= s <= 0.85 and v >= 0.75:
+        return True
+    return False
+
+
 class NeonRenderer:
     """Provides high-performance neon glow drawing utilities for QPainter."""
 
@@ -74,7 +102,7 @@ class NeonRenderer:
         painter.drawPath(path)
 
         # 4. Metallic & Glitter Specular Core for Or, Argent & Brillance
-        if color_hex.upper() in METALLIC_SHADES and width >= 3:
+        if is_metallic_color(color_hex) and width >= 3:
             sparkle_color = QColor(255, 255, 255, int(190 * alpha_factor))
             sparkle_pen = QPen(sparkle_color, max(1.2, width * 0.32), Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
             painter.setPen(sparkle_pen)

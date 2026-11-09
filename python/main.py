@@ -58,6 +58,7 @@ class PhoenixPenApp:
 
         # 5. Global Hotkey Listener
         self.hotkeys = HotkeyManager(self.config_mgr)
+        self.hotkeys.is_active_fn = lambda: self.overlay.mode != MODE_CLICK_THROUGH
         self._wire_hotkeys()
         self.hotkeys.start()
 

@@ -41,19 +41,35 @@ class HotkeyManager(QObject):
         self.cmd_down = False
         self.shift_down = False
         self._keys_pressed: Set[Any] = set()
+        self.is_active_fn: Any = None
 
     def _swallow_darwin_hotkeys(self, ev_type: Any, event: Any) -> Any:
-        """Swallows hotkeys on macOS to prevent host apps (VS Code, Safari) from stealing focus."""
+        """Swallows hotkeys on macOS so background apps do not intercept them."""
         if sys.platform != "darwin":
             return event
         try:
             import Quartz
             flags = Quartz.CGEventGetFlags(event)
             has_cmd = bool(flags & Quartz.kCGEventFlagMaskCommand)
+            has_shift = bool(flags & Quartz.kCGEventFlagMaskShift)
             has_alt = bool(flags & Quartz.kCGEventFlagMaskAlternate)
+            has_ctrl = bool(flags & Quartz.kCGEventFlagMaskControl)
             kc = Quartz.CGEventGetIntegerValueField(event, Quartz.kCGKeyboardEventKeycode)
-            # 2: D, 9: V, 14: E, 8: C, 35: P
-            if (has_cmd or has_alt) and kc in (2, 9, 14, 8, 35):
+            # 2: D, 9: V, 14: E, 8: C, 35: P, 6: Z, 13: W (Z on AZERTY)
+            is_active = bool(self.is_active_fn and self.is_active_fn())
+            # When drawing is active, swallow Cmd+Z / Ctrl+Z so editors never lose code!
+            if is_active and (has_cmd or has_ctrl or has_alt) and kc in (6, 13):
+                return None
+            if ((has_alt and not has_cmd) or (has_cmd and has_shift)) and kc in (6, 13):
+                return None
+            # Cmd+D or Option+D or Cmd+Shift+D for drawing (kc 2)
+            if (has_cmd or has_alt) and kc == 2:
+                return None
+            # Cmd+E or Option+E or Cmd+Shift+E for eraser (kc 14)
+            if (has_cmd or has_alt) and kc == 14:
+                return None
+            # Only swallow Option+Key or Cmd+Shift+Key for V (9), C (8), P (35) — NEVER plain Cmd+C/V/P!
+            if ((has_alt and not has_cmd) or (has_cmd and has_shift)) and kc in (9, 8, 35):
                 return None
         except Exception:
             pass
@@ -128,28 +144,29 @@ class HotkeyManager(QObject):
         is_p = (vk == 35) or (char_lower == 'p') or (char == 'π')
         is_z = (vk in (6, 13)) or (char_lower == 'z')
 
-        if is_d:
-            if (self.cmd_down and self.shift_down) or self.cmd_down or self.alt_down:
-                self.sig_toggle_draw_fixed.emit()
+        # Encre Fixe: Cmd+D OR Cmd+Shift+D OR Option+D
+        if is_d and ((self.cmd_down and self.shift_down) or self.cmd_down or self.alt_down):
+            self.sig_toggle_draw_fixed.emit()
 
-        elif is_v:
-            if (self.cmd_down and self.shift_down) or self.alt_down or (self.ctrl_down and self.alt_down):
-                self.sig_toggle_draw_vanishing.emit()
+        # Encre Éphémère: Cmd+Shift+V OR Option+V (never plain Cmd+V which is paste)
+        elif is_v and ((self.cmd_down and self.shift_down) or (self.alt_down and not self.cmd_down)):
+            self.sig_toggle_draw_vanishing.emit()
 
-        elif is_e:
-            if (self.cmd_down and self.shift_down) or self.cmd_down or self.alt_down:
-                self.sig_toggle_eraser.emit()
+        # Gomme: Cmd+Shift+E OR Option+E OR Cmd+E
+        elif is_e and ((self.cmd_down and self.shift_down) or self.cmd_down or self.alt_down):
+            self.sig_toggle_eraser.emit()
 
-        elif is_c:
-            if (self.cmd_down and self.shift_down) or self.alt_down or (self.ctrl_down and self.alt_down):
-                self.sig_clear_all.emit()
+        # Tout Effacer: Cmd+Shift+C OR Option+C (never plain Cmd+C which is copy)
+        elif is_c and ((self.cmd_down and self.shift_down) or (self.alt_down and not self.cmd_down)):
+            self.sig_clear_all.emit()
 
-        elif is_p:
-            if (self.cmd_down and self.shift_down) or self.cmd_down or self.alt_down:
-                self.sig_open_config.emit()
+        # Config: Cmd+Shift+P OR Option+P (never plain Cmd+P which is print)
+        elif is_p and ((self.cmd_down and self.shift_down) or (self.alt_down and not self.cmd_down)):
+            self.sig_open_config.emit()
 
+        # Undo: Cmd+Z OR Ctrl+Z OR Option+Z OR Cmd+Shift+Z
         elif is_z:
-            if self.cmd_down or self.ctrl_down:
+            if self.cmd_down or self.ctrl_down or self.alt_down:
                 self.sig_undo.emit()
 
     def _on_release(self, key: Any) -> None:

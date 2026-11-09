@@ -84,11 +84,45 @@ def test_fade_manager():
     print("  ✓ Fade Manager starts and stops accurately.")
 
 
+def test_color_wheels_and_metallic():
+    print("[TEST] Testing Interactive Color Wheels & Metallic Detector...")
+    from PyQt6.QtCore import QPointF
+    from color_wheel import MetallicWheelWidget, NeonHueWheelWidget
+    from neon_renderer import is_metallic_color
+
+    # 1. Neon Wheel
+    nw = NeonHueWheelWidget(size=140)
+    colors_emitted = []
+    nw.sig_color_changed.connect(colors_emitted.append)
+    # Touch near right rim (Red / Magenta)
+    nw._update_from_pos(QPointF(130, 70))
+    assert len(colors_emitted) > 0, "Neon wheel did not emit color signal!"
+    print(f"  ✓ Neon Wheel touch emitted: {colors_emitted[-1]}")
+
+    # 2. Metallic Wheel
+    mw = MetallicWheelWidget(size=140)
+    met_colors = []
+    mw.sig_color_changed.connect(met_colors.append)
+    # Touch top gold / amber
+    mw._update_from_pos(QPointF(70, 10))
+    assert len(met_colors) > 0, "Metallic wheel did not emit color signal!"
+    print(f"  ✓ Metallic Wheel touch emitted: {met_colors[-1]}")
+
+    # 3. Metallic Detection
+    assert is_metallic_color("#FFD700"), "Gold should be metallic!"
+    assert is_metallic_color("#9B6E28"), "Bronze should be metallic!"
+    assert is_metallic_color("#E2E8F0"), "Silver should be metallic!"
+    assert is_metallic_color("#38BDF8"), "Titanium blue should be metallic!"
+    assert not is_metallic_color("#00FF87"), "Neon green should not be metallic."
+    print("  ✓ Metallic detector accurately classifies gold, bronze, silver, and neon.")
+
+
 if __name__ == "__main__":
-    from PyQt6.QtCore import QCoreApplication
-    app = QCoreApplication.instance() or QCoreApplication(sys.argv)
+    from PyQt6.QtWidgets import QApplication
+    app = QApplication.instance() or QApplication(sys.argv)
 
     test_shape_recognizer()
     test_config_manager()
     test_fade_manager()
+    test_color_wheels_and_metallic()
     print("🎉 ALL CORE TESTS PASSED SUCCESSFULLY!")

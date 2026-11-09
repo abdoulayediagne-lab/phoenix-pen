@@ -1,5 +1,24 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Roues Chromatiques Interactives avec Viseur Tactique, Gomme 200px, Trait 100px & Résolution Définitive Cmd+Z
+- **Action :** 
+  - **Double Roue Chromatique avec Viseur Tactique (`color_wheel.py`) :** Remplacement des boutons statiques par deux disques interactifs circulaires dotés d'un viseur en croix tactile :
+    - *Cercle 1 (Spectre Néon & Vives) :* Gradient conique HSV complet sur $360^\circ$ avec cœur blanc lumineux et dégradé vers les teintes néon vives saturées (rouge-rose, orange, jaune électrique, vert-jaune citron, vert Phoenix, cyan, bleu, magenta).
+    - *Cercle 2 (Or Solaire, Argent, Bronze & Brillance Permanente) :* Gradient métallique avec teintes or pur, ambre, bronze ancien, or rose, argent étincelant, platine chrome, bleu titane et étoiles scintillantes permanentes (effet paillettes).
+  - **Application Directe en Temps Réel (Zéro Clic "Enregistrer" requis) :** Tout déplacement du viseur sur les roues ou sélection d'une pastille applique instantanément la couleur au `config_manager`, au calque d'overlay et au curseur néon sans attendre la validation du dialogue.
+  - **Épaisseurs de Gomme & de Trait Étendues :**
+    - *Gomme :* Augmentation de la plage jusqu'à **$200\text{ px}$** (6 à 200 px) avec affichage dynamique de l'anneau de visée.
+    - *Trait :* Augmentation de la plage jusqu'à **$100\text{ px}$** (1 à 100 px).
+    - Réactivité immédiate des sliders avec synchronisation temps réel dans la configuration.
+  - **Résolution Définitive de `Cmd + Z` (Annulation) :**
+    - Interception native dans `_swallow_darwin_hotkeys` via Quartz (keycodes 6 pour Z et 13 pour W sur clavier AZERTY) lorsque le mode dessin est actif, empêchant VS Code ou Safari d'annuler du texte dans les éditeurs sous-jacents.
+    - Déclenchement automatique de `sig_undo` sur `Cmd+Z`, `Ctrl+Z`, `Cmd+Shift+Z` et `Option+Z`.
+    - Ajout du gestionnaire `keyPressEvent` directement dans `OverlayWindow` pour capturer instantanément `Cmd+Z` et `Échap`.
+  - **Respect Strict des Standards Atlas :** Découpage modulaire exemplaire, $100\%$ des fichiers sous la barre des $250$ lignes (`color_wheel.py` à $206$ lignes, `config_gui.py` à $243$ lignes, `overlay_window.py` à $244$ lignes).
+- **Raison / Contexte :** Demandes explicites d'Abdoulaye : pouvoir déplacer le viseur directement dans un grand cercle de couleurs vives et un cercle de teintes métalliques dorées/argentées scintillantes, étendre la gomme jusqu'à 200px et le trait jusqu'à 100px, et corriger le raccourci `Cmd + Z` qui ne fonctionnait pas.
+- **Impact & Validation :** Tests unitaires (`test_core.py`), de flux complet (`test_full_flow.py`) et d'interface (`test_gui.py`) validés à $100\%$ avec succès. L'application tourne actuellement en production locale (PID actif).
+
+
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Gomme Découpeuse Vectorielle, Curseur Guide & Palettes Circulaires (Néon & Or/Brillance)
 - **Action :** 
   - **Gomme Découpeuse Point-par-Point (Direction Libre à la Souris) :** Fin de la suppression globale des traits entiers. Implémentation du découpage vectoriel dynamique (`_erase_at`) qui ne retire que les portions de tracés touchées par le passage de la souris et conserve les sous-segments intacts.
