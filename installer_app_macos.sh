@@ -48,6 +48,10 @@ cat << 'EOF' > "$DESKTOP_APP/Contents/Info.plist"
     <string>AppIcon</string>
     <key>LSUIElement</key>
     <string>0</string>
+    <key>LSArchitecturePriority</key>
+    <array>
+        <string>arm64</string>
+    </array>
 </dict>
 </plist>
 EOF
@@ -61,12 +65,17 @@ if [ ! -f "\$PYTHON_BIN" ]; then
     PYTHON_BIN="python3"
 fi
 
+ARCH_CMD=""
+if [ "\$(uname -m)" = "arm64" ] || [ "\$(sysctl -in hw.optional.arm64 2>/dev/null)" = "1" ]; then
+    ARCH_CMD="/usr/bin/arch -arm64"
+fi
+
 # Arrêter toute ancienne instance
 pkill -f "python/main.py" 2>/dev/null || true
 rm -f "\$PROJECT_DIR/phoenix_pen.pid"
 
 # Lancer Phoenix Pen en ouvrant le Dashboard
-PYTHONPATH=python nohup "\$PYTHON_BIN" python/main.py --open-dashboard > /tmp/phoenix_pen.log 2>&1 &
+PYTHONPATH=python nohup \$ARCH_CMD "\$PYTHON_BIN" python/main.py --open-dashboard > /tmp/phoenix_pen.log 2>&1 &
 EOF
 
 chmod +x "$DESKTOP_APP/Contents/MacOS/Phoenix Pen"

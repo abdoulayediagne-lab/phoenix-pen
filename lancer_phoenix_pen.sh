@@ -9,6 +9,10 @@ else
     PYTHON_EXEC="python3"
 fi
 
-echo "⚡ Démarrage de Phoenix Pen..."
-exec "$PYTHON_EXEC" "$DIR/python/run.py" "$@"
+ARCH_CMD=""
+if [ "$(uname -m)" = "arm64" ] || [ "$(sysctl -in hw.optional.arm64 2>/dev/null)" = "1" ]; then
+    ARCH_CMD="/usr/bin/arch -arm64"
+fi
 
+echo "⚡ Démarrage de Phoenix Pen..."
+exec $ARCH_CMD "$PYTHON_EXEC" "$DIR/python/main.py" --open-dashboard "$@"
