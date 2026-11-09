@@ -12,8 +12,8 @@ if [ -f "$PID_FILE" ]; then
         echo "⚠️ Le processus n'était plus actif."
     fi
     rm -f "$PID_FILE"
-else
-    pkill -f "phoenix-pen.*python/(main|run)\.py" || true
-    echo "⚡ Phoenix Pen arrêté."
 fi
 
+pkill -9 -f "phoenix-pen.*main\.py" 2>/dev/null || true
+pkill -9 -f "phoenix-pen.*run\.py" 2>/dev/null || true
+echo "⚡ Phoenix Pen arrêté."

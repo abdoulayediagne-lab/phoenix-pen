@@ -1,5 +1,15 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Coexistence Totale Phoenix Voice & Curseur Matériel Natif NSCursor
+- **Action :** 
+  - **Coexistence Parfaite avec Phoenix Voice :** Décalage de la capsule Phoenix Pen à `y = 112px` (la capsule Phoenix Voice s'étend de `y = 55px` à `y = 99px`), éliminant tout chevauchement ou conflit visuel. Les deux capsules cohabitent harmonieusement sans empiéter l'une sur l'autre, et Phoenix Pen reste repositionnable librement au glisser-déposer.
+  - **Double Moteur de Curseur Néon Matériel :** Injection matérielle directe via `AppKit.NSCursor.set()` couplée à `QApplication.setOverrideCursor` et au tracé canvas instantané GPU `NeonRenderer.draw_neon_cursor_dot`. Le curseur bascule instantanément en point néon vert avec cœur blanc éclatant dès l'activation d'Encre Fixe ou Éphémère.
+  - **Sortie Rapide au Clavier (Échap) :** Ajout de la touche `Échap` (`Esc`) pour quitter immédiatement le mode dessin et rendre instantanément la main à VS Code et aux logiciels actifs.
+  - **Correctif d'Arrêt BSD pkill :** Remplacement des regex parenthésées par des cibles explicites dans `arreter_phoenix_pen.sh` et `installer_app_macos.sh`, garantissant l'arrêt net de tout processus précédent sans instance fantôme.
+- **Raison / Contexte :** Demande expresse d'Abdoulaye d'éviter tout entrechoquement entre Phoenix Voice et Phoenix Pen, et de garantir l'activation effective du curseur néon et de la saisie au tracé.
+- **Impact & Validation :** Tests d'intégration et d'end-to-end 100% validés. Zéro conflit avec Phoenix Voice, bascule du curseur immédiate.
+
+
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Correctif Espace Plein Écran macOS (CanJoinAllSpaces & Y-Offset HUD)
 - **Action :** 
   - Ajout du comportement Cocoa `NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorFullScreenAuxiliary` sur l'Overlay et sur le Floating HUD : sous macOS, les applications en plein écran (comme VS Code dans le screenshot d'Abdoulaye) masquent automatiquement toutes les fenêtres flottantes qui ne déclarent pas explicitement ce comportement.

@@ -71,7 +71,8 @@ if [ "\$(uname -m)" = "arm64" ] || [ "\$(sysctl -in hw.optional.arm64 2>/dev/nul
 fi
 
 # Arrêter toute ancienne instance de Phoenix Pen uniquement
-pkill -f "phoenix-pen.*python/(main|run)\.py" 2>/dev/null || true
+pkill -9 -f "phoenix-pen.*main\.py" 2>/dev/null || true
+pkill -9 -f "phoenix-pen.*run\.py" 2>/dev/null || true
 rm -f "\$PROJECT_DIR/phoenix_pen.pid"
 
 # Lancer Phoenix Pen en ouvrant le Dashboard (chemin absolu pour isoler des autres apps Phoenix)

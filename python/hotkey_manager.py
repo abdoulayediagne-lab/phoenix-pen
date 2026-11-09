@@ -9,7 +9,6 @@ import sys
 from typing import Any
 from PyQt6.QtCore import QObject, pyqtSignal
 
-# Preload PyObjC attributes on main thread to avoid subthread lazy-import race conditions
 if sys.platform == "darwin":
     try:
         import ApplicationServices, HIServices
@@ -30,6 +29,7 @@ class HotkeyManager(QObject):
     sig_clear_all = pyqtSignal()
     sig_undo = pyqtSignal()
     sig_open_config = pyqtSignal()
+    sig_escape = pyqtSignal()
 
     def __init__(self, config_mgr: Any) -> None:
         super().__init__()
@@ -37,17 +37,14 @@ class HotkeyManager(QObject):
         self.listener: keyboard.Listener = None
         self._is_running = False
 
-        # Modifiers tracking
         self.alt_down = False
         self.ctrl_down = False
         self.cmd_down = False
         self.shift_down = False
 
     def start(self) -> None:
-        """Starts single robust event listener."""
         if self._is_running:
             self.stop()
-
         try:
             self.listener = keyboard.Listener(
                 on_press=self._on_press,
@@ -61,7 +58,6 @@ class HotkeyManager(QObject):
             print(f"[HotkeyManager] Error starting listener: {e}")
 
     def stop(self) -> None:
-        """Stops listener cleanly."""
         if self.listener and self._is_running:
             try:
                 self.listener.stop()
@@ -75,7 +71,11 @@ class HotkeyManager(QObject):
         self.start()
 
     def _on_press(self, key: Any) -> None:
-        """Tracks modifiers and triggers actions on key press (matching vk or char)."""
+        # Escape cancels drawing/eraser mode
+        if key == keyboard.Key.esc:
+            self.sig_escape.emit()
+            return
+
         # 1. Track modifier keys
         if key in (keyboard.Key.alt, keyboard.Key.alt_l, keyboard.Key.alt_r):
             self.alt_down = True
@@ -95,7 +95,6 @@ class HotkeyManager(QObject):
         char = getattr(key, 'char', None)
         char_lower = char.lower() if char else ''
 
-        # Key identities (supports QWERTY/AZERTY hardware codes & dead-keys)
         is_d = (vk == 2) or (char_lower == 'd') or (char == 'î')
         is_v = (vk == 9) or (char_lower == 'v') or (char == '◊')
         is_e = (vk == 14) or (char_lower == 'e') or (char == 'ê')
@@ -104,38 +103,31 @@ class HotkeyManager(QObject):
         is_z = (vk in (6, 13)) or (char_lower == 'z')
 
         # 3. Trigger Actions Based on Active Modifiers
-        # Encre Fixe: Cmd+Shift+D OR Cmd+D OR Option+D OR Ctrl+Option+D
         if is_d:
             if (self.cmd_down and self.shift_down) or self.cmd_down or self.alt_down:
                 self.sig_toggle_draw_fixed.emit()
 
-        # Encre Éphémère: Cmd+Shift+V OR Option+V OR Ctrl+Option+V
         elif is_v:
             if (self.cmd_down and self.shift_down) or self.alt_down or (self.ctrl_down and self.alt_down):
                 self.sig_toggle_draw_vanishing.emit()
 
-        # Gomme: Cmd+Shift+E OR Cmd+E OR Option+E OR Ctrl+Option+E
         elif is_e:
             if (self.cmd_down and self.shift_down) or self.cmd_down or self.alt_down:
                 self.sig_toggle_eraser.emit()
 
-        # Tout Effacer: Cmd+Shift+C OR Option+C OR Ctrl+Option+C
         elif is_c:
             if (self.cmd_down and self.shift_down) or self.alt_down or (self.ctrl_down and self.alt_down):
                 self.sig_clear_all.emit()
 
-        # Dashboard / Config: Cmd+Shift+P OR Cmd+P OR Option+P OR Ctrl+Option+P
         elif is_p:
             if (self.cmd_down and self.shift_down) or self.cmd_down or self.alt_down:
                 self.sig_open_config.emit()
 
-        # Undo: Cmd+Z OR Ctrl+Z
         elif is_z:
             if self.cmd_down or self.ctrl_down:
                 self.sig_undo.emit()
 
     def _on_release(self, key: Any) -> None:
-        """Releases modifier keys."""
         if key in (keyboard.Key.alt, keyboard.Key.alt_l, keyboard.Key.alt_r):
             self.alt_down = False
         elif key in (keyboard.Key.ctrl, keyboard.Key.ctrl_l, keyboard.Key.ctrl_r):

@@ -62,7 +62,6 @@ class PhoenixPenApp:
         self.hotkeys.start()
 
         self.config_dialog: ConfigWindow = None
-
         if open_dashboard_on_start or self.config_mgr.get("system", "open_dashboard_at_start", True):
             self.open_config()
 
@@ -72,11 +71,10 @@ class PhoenixPenApp:
         if screen:
             self.overlay.setGeometry(screen.virtualGeometry())
         self.overlay.show()
-        # Initialize native multi-space pass-through
         self.overlay._set_native_click_through(True)
 
     def _position_hud(self) -> None:
-        """Positions HUD pill below Phoenix Voice (y=68) and elevates z-order."""
+        """Positions HUD pill cleanly below Phoenix Voice (y=112) with zero overlap."""
         if not self.config_mgr.get("system", "floating_hud", True):
             return
         screen = QGuiApplication.primaryScreen()
@@ -84,7 +82,7 @@ class PhoenixPenApp:
             geom = screen.availableGeometry()
             w = 560
             x = geom.x() + (geom.width() - w) // 2
-            y = geom.y() + 68  # Positioned right under Phoenix Voice HUD
+            y = 112  # Perfectly spaced below Phoenix Voice (which sits at y=55..99)
             self.hud.move(x, y)
             self.hud.show()
             self.hud.raise_()
@@ -99,7 +97,6 @@ class PhoenixPenApp:
             self.overlay.set_mode(target_mode)
             self.hud.set_active_mode(target_mode)
 
-        # Ensure HUD is always visible and on top
         if self.config_mgr.get("system", "floating_hud", True):
             self.hud.show()
             self.hud.raise_()
@@ -107,21 +104,20 @@ class PhoenixPenApp:
 
     def _wire_hotkeys(self) -> None:
         """Connects background thread hotkey signals to GUI methods."""
-        self.hotkeys.sig_toggle_draw_fixed.connect(
-            lambda: self._set_mode(MODE_DRAW_FIXED)
-        )
-        self.hotkeys.sig_toggle_draw_vanishing.connect(
-            lambda: self._set_mode(MODE_DRAW_VANISHING)
-        )
-        self.hotkeys.sig_toggle_eraser.connect(
-            lambda: self._set_mode(MODE_ERASER)
-        )
+        self.hotkeys.sig_toggle_draw_fixed.connect(lambda: self._set_mode(MODE_DRAW_FIXED))
+        self.hotkeys.sig_toggle_draw_vanishing.connect(lambda: self._set_mode(MODE_DRAW_VANISHING))
+        self.hotkeys.sig_toggle_eraser.connect(lambda: self._set_mode(MODE_ERASER))
         self.hotkeys.sig_clear_all.connect(self.overlay.clear_all)
         self.hotkeys.sig_undo.connect(self.overlay.undo)
         self.hotkeys.sig_open_config.connect(self.open_config)
+        self.hotkeys.sig_escape.connect(self._on_escape)
+
+    def _on_escape(self) -> None:
+        """Escape cancels drawing mode and returns to click-through navigation."""
+        if self.overlay.mode != MODE_CLICK_THROUGH:
+            self._set_mode(MODE_CLICK_THROUGH)
 
     def open_config(self) -> None:
-        """Opens or brings configuration dialog to focus."""
         if not self.config_dialog or not self.config_dialog.isVisible():
             self.config_dialog = ConfigWindow(self.config_mgr)
             self.config_dialog.finished.connect(self._on_config_closed)
@@ -130,7 +126,6 @@ class PhoenixPenApp:
             self.config_dialog.activateWindow()
 
     def _on_config_closed(self) -> None:
-        """Applies configuration changes, toggles HUD, and reloads hotkeys."""
         self.hotkeys.reload()
         if self.config_mgr.get("system", "floating_hud", True):
             self._position_hud()
@@ -139,7 +134,6 @@ class PhoenixPenApp:
         self.overlay.update()
 
     def quit(self) -> None:
-        """Shuts down application cleanly."""
         print("[PhoenixPen] Shutting down...")
         self.hotkeys.stop()
         self.overlay.close()
