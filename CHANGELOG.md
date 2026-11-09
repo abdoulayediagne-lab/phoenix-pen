@@ -1,5 +1,13 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Résolution Majeure : QNSPanel Natif Cocoa, Curseur QCursor Matériel & Centrage HUD
+- **Action :** 
+  - Remplacement du flag `Qt.WindowType.SubWindow` par `Qt.WindowType.Tool` sur l'Overlay et sur le Floating HUD : sous macOS, `SubWindow` sans parent ne créait aucun `NSWindow` Cocoa natif, rendant les deux fenêtres totalement invisibles et non interactives.
+  - Génération d'un curseur matériel natif `QCursor` néon éclatant avec anneau vert et cœur blanc, rendu instantanément par macOS WindowServer sans latence.
+  - Calcul dynamique de la position du Floating HUD via `screen.availableGeometry()` (centrage horizontal `584px` et positionnement vertical `48px` sous la barre des menus macOS).
+- **Raison / Contexte :** Résolution définitive du problème d'invisibilité du HUD et de l'absence d'interactivité du curseur néon constatés par Abdoulaye.
+- **Impact & Validation :** Fenêtres Cocoa `QNSPanel` natives opérationnelles, HUD parfaitement visible et réactif, curseur néon instantané.
+
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Correctif Critique : Détection Matérielle VK (Cmd+D / Cmd+Shift+D) & Z-Order Natif HUD
 - **Action :** 
   - Détection basée sur les codes virtuels matériels (`vk == 2` pour 'd', `vk == 9` pour 'v', etc.) permettant le déclenchement immédiat de `Cmd + D`, `Cmd + Shift + D` et `Cmd + Shift + V` sous macOS même lorsque `char` est masqué par le système.
