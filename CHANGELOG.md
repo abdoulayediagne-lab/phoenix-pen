@@ -1,5 +1,13 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Correctif Critique : Détection Matérielle VK (Cmd+D / Cmd+Shift+D) & Z-Order Natif HUD
+- **Action :** 
+  - Détection basée sur les codes virtuels matériels (`vk == 2` pour 'd', `vk == 9` pour 'v', etc.) permettant le déclenchement immédiat de `Cmd + D`, `Cmd + Shift + D` et `Cmd + Shift + V` sous macOS même lorsque `char` est masqué par le système.
+  - Fixation du niveau de fenêtre Cocoa natif `NSStatusWindowLevel` pour le Floating HUD garantissant qu'il reste toujours au-dessus de l'overlay de dessin.
+  - Validation complète via suite de tests de bout en bout simulée (`test_full_flow.py`) validée à 100%.
+- **Raison / Contexte :** Résolution des raccourcis Cmd+D / Cmd+Shift+D et de l'interactivité des boutons HUD signalée par Abdoulaye.
+- **Impact & Validation :** Tests E2E 100% verts, boutons et raccourcis opérationnels sans aucun lag.
+
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Interface & Accessibilité : Native macOS App, Floating HUD & Dead-Keys Fix
 - **Action :** 
   - Création du script d'installation de l'application native macOS `installer_app_macos.sh` générant `Phoenix Pen.app` avec icône officielle `.icns` directement sur le Bureau.
