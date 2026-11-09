@@ -40,15 +40,16 @@ class FloatingHUD(QFrame):
         self._init_ui()
 
     def _init_window(self) -> None:
-        """Configures floating tool window properties."""
+        """Configures floating tool window properties using Tool window type."""
         flags = (
             Qt.WindowType.FramelessWindowHint
             | Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.SubWindow
+            | Qt.WindowType.Tool
         )
         self.setWindowFlags(flags)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setFixedHeight(48)
+        self.setFixedWidth(560)
         self.setStyleSheet("""
             FloatingHUD {
                 background-color: rgba(18, 22, 20, 245);
@@ -108,13 +109,13 @@ class FloatingHUD(QFrame):
 
         # 1. Encre Fixe
         self.btn_fixed = QPushButton("🖋️ Fixe")
-        self.btn_fixed.setToolTip("Encre Fixe (Cmd+Shift+D ou Alt+D)")
+        self.btn_fixed.setToolTip("Encre Fixe (Cmd+D ou Cmd+Shift+D)")
         self.btn_fixed.clicked.connect(self._handle_fixed)
         layout.addWidget(self.btn_fixed)
 
         # 2. Encre Éphémère
         self.btn_vanishing = QPushButton("⏳ Fade")
-        self.btn_vanishing.setToolTip("Encre Éphémère (Cmd+Shift+V ou Alt+V)")
+        self.btn_vanishing.setToolTip("Encre Éphémère (Cmd+Shift+V ou Option+V)")
         self.btn_vanishing.clicked.connect(self._handle_vanishing)
         layout.addWidget(self.btn_vanishing)
 
@@ -126,13 +127,13 @@ class FloatingHUD(QFrame):
 
         # 4. Undo
         self.btn_undo = QPushButton("↩️")
-        self.btn_undo.setToolTip("Annuler (Cmd+Z / Ctrl+Z)")
+        self.btn_undo.setToolTip("Annuler (Cmd+Z)")
         self.btn_undo.clicked.connect(self.on_undo)
         layout.addWidget(self.btn_undo)
 
         # 5. Clear All
         self.btn_clear = QPushButton("🗑️")
-        self.btn_clear.setToolTip("Tout Effacer (Cmd+Shift+C ou Alt+C)")
+        self.btn_clear.setToolTip("Tout Effacer (Cmd+Shift+C)")
         self.btn_clear.clicked.connect(self.on_clear)
         layout.addWidget(self.btn_clear)
 

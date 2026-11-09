@@ -7,7 +7,9 @@ Atlas Standard: < 250 lines.
 import sys
 from typing import Any, Dict, List, Optional, Tuple
 from PyQt6.QtCore import QPointF, Qt
-from PyQt6.QtGui import QMouseEvent, QPaintEvent, QPainter
+from PyQt6.QtGui import (
+    QBrush, QColor, QCursor, QMouseEvent, QPaintEvent, QPainter, QPen, QPixmap
+)
 from PyQt6.QtWidgets import QWidget
 
 from fade_manager import FadeManager
@@ -45,11 +47,11 @@ class OverlayWindow(QWidget):
         self._init_window()
 
     def _init_window(self) -> None:
-        """Initializes frameless, translucent, always-on-top window."""
+        """Initializes frameless, translucent, always-on-top window using Tool type."""
         flags = (
             Qt.WindowType.FramelessWindowHint
             | Qt.WindowType.WindowStaysOnTopHint
-            | Qt.WindowType.SubWindow
+            | Qt.WindowType.Tool
         )
         self.setWindowFlags(flags)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
@@ -69,6 +71,32 @@ class OverlayWindow(QWidget):
             except Exception as e:
                 print(f"[OverlayWindow] macOS click-through warning: {e}")
 
+    def _create_neon_cursor(self, color_hex: str) -> QCursor:
+        """Generates a hardware-rendered glowing neon dot cursor."""
+        size = 24
+        pix = QPixmap(size, size)
+        pix.fill(Qt.GlobalColor.transparent)
+        painter = QPainter(pix)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+
+        base_color = QColor(color_hex)
+        if not base_color.isValid():
+            base_color = QColor("#00FF87")
+
+        # Glow ring
+        glow = QColor(base_color)
+        glow.setAlpha(120)
+        painter.setPen(QPen(glow, 3.5))
+        painter.drawEllipse(3, 3, 18, 18)
+
+        # Core dot
+        painter.setPen(QPen(base_color, 1.5))
+        painter.setBrush(QBrush(QColor(255, 255, 255, 245)))
+        painter.drawEllipse(7, 7, 10, 10)
+        painter.end()
+
+        return QCursor(pix, 12, 12)
+
     def set_mode(self, new_mode: str) -> None:
         """Switches interaction mode (click-through vs drawing/eraser)."""
         self.mode = new_mode
@@ -80,10 +108,11 @@ class OverlayWindow(QWidget):
         else:
             self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
             self._set_native_click_through(False)
-            if self.config_mgr.get("drawing", "cursor_dot", True):
-                self.setCursor(Qt.CursorShape.BlankCursor)
-            else:
+            if new_mode == MODE_ERASER:
                 self.setCursor(Qt.CursorShape.CrossCursor)
+            else:
+                color = self.config_mgr.get("drawing", "active_color", "#00FF87")
+                self.setCursor(self._create_neon_cursor(color))
             self.raise_()
         self.update()
 
@@ -194,13 +223,6 @@ class OverlayWindow(QWidget):
             w = int(self.config_mgr.get("drawing", "stroke_width", 4))
             glow = bool(self.config_mgr.get("drawing", "neon_glow", True))
             NeonRenderer.draw_neon_stroke(painter, path, color, w, alpha_factor=1.0, enable_glow=glow)
-
-        # 4. Render Neon Cursor Dot
-        if self.mode != MODE_CLICK_THROUGH and self.cursor_pos:
-            color = self.config_mgr.get("drawing", "active_color", "#00FF87")
-            w = int(self.config_mgr.get("drawing", "stroke_width", 4))
-            dot_rad = max(4.0, w / 2.0 + 3.0)
-            NeonRenderer.draw_neon_cursor_dot(painter, self.cursor_pos, color, radius=dot_rad)
 
     def _render_single_stroke(self, painter: QPainter, stroke_data: dict, alpha: float) -> None:
         """Renders either recognized shape or freehand path."""
