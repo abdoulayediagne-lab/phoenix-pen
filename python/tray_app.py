@@ -99,3 +99,4 @@ class TrayApp(QSystemTrayIcon):
     def _on_tray_activated(self, reason: QSystemTrayIcon.ActivationReason) -> None:
         if reason in (QSystemTrayIcon.ActivationReason.DoubleClick, QSystemTrayIcon.ActivationReason.Trigger):
             self.on_config()
+

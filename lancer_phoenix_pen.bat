@@ -11,3 +11,4 @@ if exist ".venv\Scripts\python.exe" (
 echo Demarrage de Phoenix Pen en arriere-plan...
 start "" "%PYTHON_EXEC%" "python\run.py"
 exit
+

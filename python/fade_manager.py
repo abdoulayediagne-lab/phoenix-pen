@@ -102,3 +102,4 @@ class FadeManager(QObject):
         # ZERO CPU OPTIMIZATION: Stop timer immediately when empty
         if not self.strokes:
             self.timer.stop()
+

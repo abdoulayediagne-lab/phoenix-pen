@@ -11,3 +11,4 @@ fi
 
 echo "⚡ Démarrage de Phoenix Pen..."
 exec "$PYTHON_EXEC" "$DIR/python/run.py" "$@"
+

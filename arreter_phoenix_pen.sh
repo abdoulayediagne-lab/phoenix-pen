@@ -16,3 +16,4 @@ else
     pkill -f "python/run.py" || true
     echo "⚡ Phoenix Pen arrêté."
 fi
+

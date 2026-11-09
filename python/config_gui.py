@@ -1,6 +1,6 @@
 """
 Modern Dark-Mode Settings GUI for Phoenix Pen.
-Allows configuring hotkeys, ink modes, fade duration, colors, and neon intensity.
+Allows configuring hotkeys, ink modes, fade duration, colors, and floating HUD.
 Atlas Standard: < 250 lines.
 """
 
@@ -20,8 +20,8 @@ class ConfigWindow(QDialog):
     def __init__(self, config_mgr: Any) -> None:
         super().__init__()
         self.config_mgr = config_mgr
-        self.setWindowTitle("⚡ Phoenix Pen — Configuration")
-        self.setFixedSize(540, 680)
+        self.setWindowTitle("⚡ Phoenix Pen — Configuration & Dashboard")
+        self.setFixedSize(560, 720)
         self.setStyleSheet("""
             QDialog {
                 background-color: #121614;
@@ -105,10 +105,10 @@ class ConfigWindow(QDialog):
 
     def _init_ui(self) -> None:
         layout = QVBoxLayout(self)
-        layout.setSpacing(14)
+        layout.setSpacing(12)
 
         # Title Banner
-        header = QLabel("⚡ Phoenix Pen — Paramètres & Raccourcis")
+        header = QLabel("⚡ Phoenix Pen — Tableau de Bord & Réglages")
         header.setFont(QFont("Arial", 16, QFont.Weight.Bold))
         header.setStyleSheet("color: #00FF87; margin-bottom: 2px;")
         layout.addWidget(header)
@@ -117,7 +117,6 @@ class ConfigWindow(QDialog):
         ink_group = QGroupBox("1. Modes d'Encre & Rendu")
         ink_form = QFormLayout(ink_group)
 
-        # Fade Duration dropdown
         self.fade_combo = QComboBox()
         self.fade_combo.addItems(["1.5 secondes", "2.0 secondes (Défaut)", "3.0 secondes", "5.0 secondes"])
         current_dur = float(self.config_mgr.get("drawing", "vanishing_duration", 2.0))
@@ -137,15 +136,18 @@ class ConfigWindow(QDialog):
         w_layout.addWidget(self.width_label)
         ink_form.addRow("✏️ Épaisseur du trait :", w_layout)
 
-        # Neon Glow Checkbox
-        self.glow_check = QCheckBox("Activer l'effet Néon Lumineux (Glow)")
+        # Glow & Shape checks
+        self.glow_check = QCheckBox("Activer l'effet Néon Lumineux (Glow multicouche)")
         self.glow_check.setChecked(bool(self.config_mgr.get("drawing", "neon_glow", True)))
         ink_form.addRow(self.glow_check)
 
-        # Shape Recognition Checkbox
         self.shape_check = QCheckBox("Reconnaissance intelligente des formes (Seuil 88%)")
         self.shape_check.setChecked(bool(self.config_mgr.get("drawing", "shape_recognition", True)))
         ink_form.addRow(self.shape_check)
+
+        self.hud_check = QCheckBox("Afficher la barre flottante rapide (HUD Capsule)")
+        self.hud_check.setChecked(bool(self.config_mgr.get("system", "floating_hud", True)))
+        ink_form.addRow(self.hud_check)
 
         layout.addWidget(ink_group)
 
@@ -154,7 +156,7 @@ class ConfigWindow(QDialog):
         color_layout = QVBoxLayout(color_group)
 
         palette_grid = QGridLayout()
-        colors = self.config_mgr.get("palette", [])
+        colors = self.config_mgr.get("palette", default=[])
         self.color_buttons = []
         for i, c_hex in enumerate(colors):
             btn = QPushButton()
@@ -182,14 +184,14 @@ class ConfigWindow(QDialog):
         layout.addWidget(color_group)
 
         # 3. Section Raccourcis Globaux
-        key_group = QGroupBox("3. Raccourcis Globaux")
+        key_group = QGroupBox("3. Raccourcis Globaux (Mac & Windows)")
         key_form = QFormLayout(key_group)
-        hotkeys = self.config_mgr.get("hotkeys", {})
-        key_form.addRow("🖋️ Encre Fixe (Toggle) :", QLabel(f"<b>{hotkeys.get('draw_fixed', '<alt>+d')}</b>"))
-        key_form.addRow("⏳ Encre Éphémère (Toggle) :", QLabel(f"<b>{hotkeys.get('draw_vanishing', '<alt>+v')}</b>"))
-        key_form.addRow("🧹 Gomme :", QLabel(f"<b>{hotkeys.get('eraser', '<alt>+e')}</b>"))
-        key_form.addRow("🗑️ Tout Effacer :", QLabel(f"<b>{hotkeys.get('clear_all', '<alt>+c')}</b>"))
-        key_form.addRow("↩️ Annuler (Undo) :", QLabel(f"<b>{hotkeys.get('undo', '<cmd>+z')}</b>"))
+        key_form.addRow("🖋️ Encre Fixe :", QLabel("<b>Option + D</b> ou <b>Ctrl + Option + D</b> (ou Cmd+Shift+D)"))
+        key_form.addRow("⏳ Encre Éphémère :", QLabel("<b>Option + V</b> ou <b>Ctrl + Option + V</b> (ou Cmd+Shift+V)"))
+        key_form.addRow("🧹 Gomme :", QLabel("<b>Option + E</b> ou <b>Ctrl + Option + E</b>"))
+        key_form.addRow("🗑️ Tout Effacer :", QLabel("<b>Option + C</b> ou <b>Ctrl + Option + C</b>"))
+        key_form.addRow("↩️ Annuler (Undo) :", QLabel("<b>Cmd + Z</b> (Mac) / <b>Ctrl + Z</b> (Win)"))
+        key_form.addRow("⚙️ Configuration :", QLabel("<b>Option + P</b> ou <b>Ctrl + Option + P</b>"))
         layout.addWidget(key_group)
 
         # 4. Save Button
@@ -215,6 +217,7 @@ class ConfigWindow(QDialog):
         self.config_mgr.set("drawing", "stroke_width", self.width_slider.value())
         self.config_mgr.set("drawing", "neon_glow", self.glow_check.isChecked())
         self.config_mgr.set("drawing", "shape_recognition", self.shape_check.isChecked())
+        self.config_mgr.set("system", "floating_hud", self.hud_check.isChecked())
         self.config_mgr.set("drawing", "active_color", self.active_color)
 
         self.accept()

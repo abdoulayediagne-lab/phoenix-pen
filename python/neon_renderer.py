@@ -141,3 +141,4 @@ class NeonRenderer:
         painter.setPen(QPen(base_color, 2.0))
         painter.setBrush(QBrush(dot_color))
         painter.drawEllipse(pos, radius, radius)
+

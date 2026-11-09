@@ -27,8 +27,22 @@ def test_gui_components():
 
     print("[TEST] Initializing ConfigWindow...")
     config_win = ConfigWindow(cfg)
-    assert config_win.windowTitle() == "⚡ Phoenix Pen — Configuration"
+    assert "Phoenix Pen" in config_win.windowTitle()
     print("  ✓ ConfigWindow verified.")
+
+    print("[TEST] Initializing FloatingHUD...")
+    from floating_hud import FloatingHUD
+    hud = FloatingHUD(
+        on_toggle_fixed=lambda: None,
+        on_toggle_vanishing=lambda: None,
+        on_toggle_eraser=lambda: None,
+        on_clear=lambda: None,
+        on_undo=lambda: None,
+        on_dashboard=lambda: None,
+        config_mgr=cfg
+    )
+    assert hud.btn_fixed is not None
+    print("  ✓ FloatingHUD verified.")
 
     print("[TEST] Initializing TrayApp...")
     tray = TrayApp(
@@ -48,3 +62,4 @@ def test_gui_components():
 
 if __name__ == "__main__":
     test_gui_components()
+

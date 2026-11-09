@@ -41,3 +41,4 @@ lancer_phoenix_pen.bat
 Pour arrêter l'application :
 - **macOS :** Exécuter `./arreter_phoenix_pen.sh` ou faire un clic droit sur l'icône dans la barre des menus > *Quitter*.
 - **Windows :** Exécuter `arreter_phoenix_pen.bat` ou clic droit System Tray > *Quitter*.
+

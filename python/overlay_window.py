@@ -193,3 +193,4 @@ class OverlayWindow(QWidget):
         else:
             path = NeonRenderer.create_smooth_path(stroke_data.get("points", []))
             NeonRenderer.draw_neon_stroke(painter, path, color, width, alpha_factor=alpha, enable_glow=glow)
+
