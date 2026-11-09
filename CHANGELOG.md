@@ -1,5 +1,20 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Fin Téléportation Spaces (Suppression Focus/Activate), Gomme 100% Fonctionnelle sur Ovales & Tracé Pur Solide
+- **Action :** 
+  - **Fin Définitive du Changement d'Espace/Onglet Intempestif :** 
+    - Suppression des appels Cocoa `activateWithOptions_`, `activateWindow()` et `makeKeyAndOrderFront_` dans `OverlayWindow`.
+    - Sous macOS, activer une application fait automatiquement basculer Mission Control vers l'espace où l'application a été lancée.
+    - Seul `orderFrontRegardless()` est désormais appelé : le feutre et la capsule s'activent instantanément **sur l'onglet et le bureau où se trouve l'utilisateur sans aucune téléportation**.
+  - **Gomme 100% Opérationnelle sur les Ovales et Ellipses (`discretize_shape`) :**
+    - Résolution de l'impossibilité de gommer les ovales : la discrétisation vectorielle ne gérait que les cercles et ignorait `ellipse`, générant une liste de points vide qui empêchait la détection de collision de la gomme.
+    - Échantillonnage mathématique de 91 points le long du périmètre des ellipses (`cx + rx*cos(rad), cy + ry*sin(rad)`). Les ovales sont désormais découpés et effacés au pixel près par la gomme.
+  - **Éradication Totale du Contour Noir : Tracé 100% Solide & Homogène :**
+    - Suppression de la double passe de lueur néon semi-transparente dans `NeonRenderer` qui créait un liseré grisâtre sur fond blanc lors de la composition WindowServer.
+    - Le tracé est désormais peint en encre 100% opaque et pure dans la couleur choisie par l'utilisateur, sans aucun liseré sombre.
+- **Raison / Contexte :** Retours d'Abdoulaye : `Cmd+D` téléportait sur un autre bureau au lieu de rester sur la page courante, la gomme n'effaçait pas l'ovale, et le contour noir persistait sur les tracés.
+- **Impact & Validation :** Tests unitaires (`test_core.py`), simulations de flux (`test_full_flow.py`) et tests GUI (`test_gui.py`) 100% validés. Tracé opaque et découpage de l'ovale confirmés.
+
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Persistance Universelle Multi-Spaces / Plein Écran (setHidesOnDeactivate=False) & Suppression Définitive du Contour Sombre ("Serpent")
 - **Action :** 
   - **Capsule Flottante Persistante sur Tous les Espaces et Onglets (`setHidesOnDeactivate_(False)`) :**

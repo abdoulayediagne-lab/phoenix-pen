@@ -216,33 +216,33 @@ class ConfigWindow(QDialog):
         self.config_mgr.set("drawing", "vanishing_duration", dur_map.get(idx, 2.0))
 
     def _on_width_changed(self, val: int) -> None:
-        self.width_label.setText(f"{val} px")
-        self.config_mgr.set("drawing", "stroke_width", val)
+        self.width_label.setText(f"{val} px"); self.config_mgr.set("drawing", "stroke_width", val)
 
     def _on_eraser_changed(self, val: int) -> None:
-        self.eraser_label.setText(f"{val} px")
-        self.config_mgr.set("drawing", "eraser_width", val)
+        self.eraser_label.setText(f"{val} px"); self.config_mgr.set("drawing", "eraser_width", val)
 
     def _select_color(self, hex_val: str) -> None:
-        """Live update: applies color immediately to config and renderer."""
         self.active_color = hex_val.upper()
         self._update_preview(self.active_color)
         self.config_mgr.set("drawing", "active_color", self.active_color)
 
     def _update_preview(self, hex_val: str) -> None:
-        self.color_preview.setStyleSheet(
-            f"background-color: {hex_val}; border-radius: 18px; border: 2.5px solid #00FF87;"
-        )
+        self.color_preview.setStyleSheet(f"background-color: {hex_val}; border-radius: 18px; border: 2.5px solid #00FF87;")
         self.color_hex_lbl.setText(hex_val)
 
+    def showEvent(self, event: Any) -> None:
+        super().showEvent(event)
+        try:
+            import AppKit, objc
+            nswin = objc.objc_object(c_void_p=int(self.winId())).window()
+            if nswin is not None:
+                nswin.setCollectionBehavior_(AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary)
+        except Exception: pass
+
     def _save_settings(self) -> None:
-        dur_map = {0: 1.5, 1: 2.0, 2: 3.0, 3: 5.0}
-        sel_dur = dur_map.get(self.fade_combo.currentIndex(), 2.0)
-        self.config_mgr.set("drawing", "vanishing_duration", sel_dur)
-        self.config_mgr.set("drawing", "stroke_width", self.width_slider.value())
-        self.config_mgr.set("drawing", "eraser_width", self.eraser_slider.value())
-        self.config_mgr.set("drawing", "neon_glow", self.glow_check.isChecked())
-        self.config_mgr.set("drawing", "shape_recognition", self.shape_check.isChecked())
+        dur = {0: 1.5, 1: 2.0, 2: 3.0, 3: 5.0}.get(self.fade_combo.currentIndex(), 2.0)
+        self.config_mgr.set("drawing", "vanishing_duration", dur)
+        for k, v in [("stroke_width", self.width_slider.value()), ("eraser_width", self.eraser_slider.value()), ("neon_glow", self.glow_check.isChecked()), ("shape_recognition", self.shape_check.isChecked()), ("active_color", self.active_color)]:
+            self.config_mgr.set("drawing", k, v)
         self.config_mgr.set("system", "floating_hud", self.hud_check.isChecked())
-        self.config_mgr.set("drawing", "active_color", self.active_color)
         self.accept()

@@ -81,8 +81,7 @@ class OverlayWindow(QWidget):
                     nswin.setLevel_(AppKit.NSStatusWindowLevel - 1)
                     if not ignore:
                         nswin.setAcceptsMouseMovedEvents_(True)
-                        nswin.makeKeyAndOrderFront_(None); nswin.orderFrontRegardless()
-                        AppKit.NSRunningApplication.currentApplication().activateWithOptions_(AppKit.NSApplicationActivateIgnoringOtherApps)
+                        nswin.orderFrontRegardless()
                         nswin.invalidateCursorRectsForView_(view)
             except Exception as e:
                 print(f"[OverlayWindow] macOS click-through warning: {e}")
@@ -136,7 +135,7 @@ class OverlayWindow(QWidget):
                 c = self.config_mgr.get("drawing", "active_color", "#00FF87")
                 qcur, pix = self._create_neon_cursor(c)
                 QApplication.setOverrideCursor(qcur); self.setCursor(qcur); self._apply_cocoa_cursor(pix)
-            self.raise_(); self.activateWindow()
+            self.raise_()
         self.update()
 
     def toggle_mode(self, target_mode: str) -> None:
@@ -189,7 +188,7 @@ class OverlayWindow(QWidget):
             glow = bool(self.config_mgr.get("drawing", "neon_glow", True))
             g_int = float(self.config_mgr.get("drawing", "neon_intensity", 0.75))
             shape = self.recognizer.recognize(self.current_points) if self.config_mgr.get("drawing", "shape_recognition", True) else None
-            pts = self.recognizer.discretize_shape(shape) if shape else list(self.current_points)
+            pts = (self.recognizer.discretize_shape(shape) if shape else None) or list(self.current_points)
             st = {"points": pts, "shape": shape, "color": c, "width": w, "glow": glow, "glow_intensity": g_int}
 
             if self.mode == MODE_DRAW_FIXED:

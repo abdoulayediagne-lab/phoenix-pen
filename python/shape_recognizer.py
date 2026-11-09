@@ -115,12 +115,16 @@ class ShapeRecognizer:
             if stype == "arrow":
                 hl, hr = shape_def["head_left"], shape_def["head_right"]
                 pts.extend([hl, e, hr])
-        elif stype == "circle":
-            cx, cy = shape_def["center"]
-            r = shape_def["radius"]
+        elif stype in ("circle", "ellipse"):
+            if stype == "circle":
+                cx, cy = shape_def["center"]
+                rx = ry = shape_def["radius"]
+            else:
+                x, y, w, h = shape_def["rect"]
+                cx, cy, rx, ry = x + w / 2.0, y + h / 2.0, w / 2.0, h / 2.0
             for deg in range(0, 360, 4):
                 rad = math.radians(deg)
-                pts.append((cx + r * math.cos(rad), cy + r * math.sin(rad)))
+                pts.append((cx + rx * math.cos(rad), cy + ry * math.sin(rad)))
             pts.append(pts[0])
         return pts
 

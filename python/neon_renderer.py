@@ -83,14 +83,7 @@ class NeonRenderer:
         painter.setBrush(Qt.BrushStyle.NoBrush)
         base_color = QColor(color_hex) if QColor(color_hex).isValid() else QColor("#00FF87")
 
-        if enable_glow and width >= 2:
-            # Soft subtle aura matching chosen color
-            glow_col = QColor(base_color)
-            glow_col.setAlpha(max(0, min(255, int(55 * glow_intensity * alpha_factor))))
-            painter.setPen(QPen(glow_col, width + max(4.0, width * 0.35), Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-            painter.drawPath(path)
-
-        # Pure solid vivid stroke in exact chosen color
+        # Pure solid crisp stroke in user exact chosen color (zero outer fringe, zero dark contour)
         core_color = QColor(base_color)
         core_color.setAlpha(max(0, min(255, int(255 * alpha_factor))))
         painter.setPen(QPen(core_color, width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
