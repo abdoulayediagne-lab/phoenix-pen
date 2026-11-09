@@ -1,5 +1,22 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Matrice Multi-Écrans (Screen 0 + Screen 1), Distinction Trait Droit / Flèche, Découpage Vectoriel Solide des Rectangles & Slider Gomme 150px
+- **Action :** 
+  - **Distinction Nette Trait Droit vs Flèche (`ShapeRecognizer`) :** 
+    - Le tracé rectiligne simple snappe désormais en **ligne droite pure** (`type: "line"`).
+    - La détection de flèche (`type: "arrow"`) requiert un geste intentionnel de retour (barbillon en V inversé) à l'extrémité du trait. Fin des flèches intempestives sur les lignes simples.
+  - **Gomme Vectorielle Solide sur Formes Snappées (`discretize_shape`) :**
+    - Lors de la reconnaissance géométrique d'un rectangle, carré, cercle ou ligne, la forme est discrétisée en points mathématiques exacts le long de ses segments.
+    - Lors d'un coup de gomme partiel, les segments restants conservent leur rigidité et leur rectitude parfaite au lieu de redevenir des tracés tremblotants à main levée.
+  - **Ajustement Slider Gomme à 150px Max :** La plage de réglage de la gomme dans le Dashboard passe de 6-200px à **6-150px** pour une ergonomie optimale.
+  - **Prise en Compte Live de la Durée d'Encre Éphémère :** Connexion directe de l'événement `currentIndexChanged` sur le sélecteur de durée (1.5s, 2.0s, 3.0s, 5.0s) appliquant immédiatement la nouvelle durée sans nécessiter de clic sur "Enregistrer".
+  - **Architecture Multi-Écrans Souveraine (`self.overlays`) :** 
+    - Déploiement d'un calque `OverlayWindow` dédié par écran physique (`QGuiApplication.screens()`), couvrant simultanément l'écran Retina intégré (0,0 1728x1117) et le moniteur externe C24M2020D (1728,0 1920x1080).
+    - Possibilité d'activer le mode dessin et de tracer instantanément sur n'importe quel écran via `Cmd+D`, `Option+D` ou la capsule HUD.
+  - **Filtre Anti-Rebond Raccourcis (`_keys_down`) :** Mémorisation des touches enfoncées pour bloquer la répétition automatique système (30Hz) et empêcher le clignotement/désactivation involontaire du feutre.
+- **Raison / Contexte :** Retours d'expérience d'Abdoulaye : distinction entre trait droit et flèche, maintien de la rectitude des formes snappées après effacement partiel, ajustement de la taille de la gomme à 150px, rechargement en direct de la durée éphémère et tracé réactif sur configuration multi-moniteurs.
+- **Impact & Validation :** Tests unitaires (`test_core.py`), simulations de flux (`test_full_flow.py`) et tests GUI (`test_gui.py`) 100% validés. Nouvelle instance active en arrière-plan sans warning.
+
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Éradication Crash TSM via Quartz EventTap Main-Loop, Tracé Plein Écran Cocoa Instantané & Intégration Type Phoenix Voice
 - **Action :** 
   - **Éradication Définitive du Crash Python (`_dispatch_assert_queue_fail`) :** Remplacement de `pynput` par une interception native Apple `Quartz.CGEventTap` connectée directement à la boucle principale Cocoa (`CFRunLoopGetMain()`). Fin des appels illégaux à `TSMGetInputSourceProperty` sur les threads secondaires de macOS 15+ Sequoia. Zéro crash, zéro message "Python a quitté de manière imprévue".

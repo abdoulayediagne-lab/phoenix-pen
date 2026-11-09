@@ -26,9 +26,10 @@ Point = Tuple[float, float]
 class OverlayWindow(QWidget):
     """Fullscreen translucent overlay supporting native OS click-through and neon drawing."""
 
-    def __init__(self, config_mgr: Any) -> None:
+    def __init__(self, config_mgr: Any, target_screen: Any = None) -> None:
         super().__init__()
         self.config_mgr = config_mgr
+        self.target_screen = target_screen
         self.mode = MODE_CLICK_THROUGH
         self.permanent_strokes: List[Dict[str, Any]] = []
         self.undo_stack: List[Dict[str, Any]] = []
@@ -54,17 +55,16 @@ class OverlayWindow(QWidget):
         self.update()
 
     def _adapt_to_active_screen(self) -> None:
-        screen = QGuiApplication.screenAt(QCursor.pos()) or QGuiApplication.primaryScreen()
-        if screen:
-            self.setGeometry(screen.geometry())
+        target = self.target_screen or QGuiApplication.screenAt(QCursor.pos()) or QGuiApplication.primaryScreen()
+        if target:
+            self.setGeometry(target.geometry())
             if sys.platform == "darwin":
                 try:
                     import AppKit, objc
                     nswin = objc.objc_object(c_void_p=int(self.winId())).window()
                     if nswin is not None:
-                        pt = AppKit.NSEvent.mouseLocation()
                         for s in AppKit.NSScreen.screens():
-                            if AppKit.NSMouseInRect(pt, s.frame(), False):
+                            if int(s.frame().origin.x) == target.geometry().x():
                                 nswin.setFrame_display_(s.frame(), True); break
                 except Exception: pass
 
@@ -189,7 +189,8 @@ class OverlayWindow(QWidget):
             glow = bool(self.config_mgr.get("drawing", "neon_glow", True))
             g_int = float(self.config_mgr.get("drawing", "neon_intensity", 0.75))
             shape = self.recognizer.recognize(self.current_points) if self.config_mgr.get("drawing", "shape_recognition", True) else None
-            st = {"points": list(self.current_points), "shape": shape, "color": c, "width": w, "glow": glow, "glow_intensity": g_int}
+            pts = self.recognizer.discretize_shape(shape) if shape else list(self.current_points)
+            st = {"points": pts, "shape": shape, "color": c, "width": w, "glow": glow, "glow_intensity": g_int}
 
             if self.mode == MODE_DRAW_FIXED:
                 self.permanent_strokes.append(st)

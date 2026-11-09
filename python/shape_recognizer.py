@@ -26,12 +26,10 @@ class ShapeRecognizer:
         if total_arc_len < 25.0:
             return None
 
-        # 1. Test for Straight Line
-        line_res = self._test_line(points, total_arc_len)
-        if line_res:
-            # Check if it has an arrowhead
-            arrow_res = self._test_arrow(points, line_res)
-            return arrow_res if arrow_res else line_res
+        # 1. Test for Straight Line or Directional Arrow
+        line_or_arrow = self._test_line_or_arrow(points, total_arc_len)
+        if line_or_arrow:
+            return line_or_arrow
 
         # 2. Test for Closed Shapes (Circle, Ellipse, Rectangle, Square)
         p_start, p_end = points[0], points[-1]
@@ -58,59 +56,73 @@ class ShapeRecognizer:
             total += math.hypot(points[i + 1][0] - points[i][0], points[i + 1][1] - points[i][1])
         return total
 
-    def _test_line(self, points: List[Point], total_arc: float) -> Optional[Dict[str, Any]]:
-        p0, pn = points[0], points[-1]
-        chord = math.hypot(pn[0] - p0[0], pn[1] - p0[1])
-        if chord < 20:
+    def _test_line_or_arrow(self, points: List[Point], total_arc: float) -> Optional[Dict[str, Any]]:
+        p0 = points[0]
+        tip_idx = max(range(len(points)), key=lambda i: math.hypot(points[i][0] - p0[0], points[i][1] - p0[1]))
+        if tip_idx >= len(points) - 3:
+            pn = points[-1]
+            chord = math.hypot(pn[0] - p0[0], pn[1] - p0[1])
+            if chord < 20 or (chord / total_arc) < self.threshold:
+                return None
+            vx, vy = pn[0] - p0[0], pn[1] - p0[1]
+            max_dev = max(abs(vy * px - vx * py + pn[0] * p0[1] - pn[1] * p0[0]) / chord for px, py in points)
+            if (max_dev / chord) < (1.0 - self.threshold):
+                return {"type": "line", "start": p0, "end": pn, "confidence": chord / total_arc}
             return None
 
-        straightness = chord / total_arc
-        if straightness < self.threshold:
-            return None
-
-        # Check max deviation perpendicular to chord
-        max_dev = 0.0
-        vx, vy = pn[0] - p0[0], pn[1] - p0[1]
-        v_len = chord
-        for px, py in points:
-            dist = abs(vy * px - vx * py + pn[0] * p0[1] - pn[1] * p0[0]) / v_len
-            if dist > max_dev:
-                max_dev = dist
-
-        if (max_dev / chord) < (1.0 - self.threshold):
-            return {
-                "type": "line",
-                "start": p0,
-                "end": pn,
-                "confidence": straightness
-            }
+        # Arrow candidate with doubling-back barb
+        shaft_pts = points[:tip_idx + 1]
+        shaft_arc = self._arc_length(shaft_pts)
+        tip_pt = points[tip_idx]
+        shaft_chord = math.hypot(tip_pt[0] - p0[0], tip_pt[1] - p0[1])
+        if shaft_chord >= 35.0 and shaft_arc > 0 and (shaft_chord / shaft_arc) >= self.threshold:
+            vx, vy = tip_pt[0] - p0[0], tip_pt[1] - p0[1]
+            max_dev = max(abs(vy * px - vx * py + tip_pt[0] * p0[1] - tip_pt[1] * p0[0]) / shaft_chord for px, py in shaft_pts)
+            if (max_dev / shaft_chord) < (1.0 - self.threshold):
+                barb_len = math.hypot(points[-1][0] - tip_pt[0], points[-1][1] - tip_pt[1])
+                if 8.0 <= barb_len <= shaft_chord * 0.45:
+                    angle = math.atan2(vy, vx)
+                    h_len = min(24.0, max(12.0, shaft_chord * 0.18))
+                    w_ang = math.radians(28)
+                    return {
+                        "type": "arrow", "start": p0, "end": tip_pt,
+                        "head_left": (tip_pt[0] - h_len * math.cos(angle - w_ang), tip_pt[1] - h_len * math.sin(angle - w_ang)),
+                        "head_right": (tip_pt[0] - h_len * math.cos(angle + w_ang), tip_pt[1] - h_len * math.sin(angle + w_ang)),
+                        "confidence": shaft_chord / shaft_arc
+                    }
         return None
 
-    def _test_arrow(self, points: List[Point], line_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Detects if end of stroke forms a directional arrow tip."""
-        p0, pn = line_info["start"], line_info["end"]
-        dx, dy = pn[0] - p0[0], pn[1] - p0[1]
-        shaft_len = math.hypot(dx, dy)
-        if shaft_len < 35:
-            return None
-
-        angle = math.atan2(dy, dx)
-        head_len = min(24.0, max(12.0, shaft_len * 0.18))
-        wing_angle = math.radians(28)
-
-        left_x = pn[0] - head_len * math.cos(angle - wing_angle)
-        left_y = pn[1] - head_len * math.sin(angle - wing_angle)
-        right_x = pn[0] - head_len * math.cos(angle + wing_angle)
-        right_y = pn[1] - head_len * math.sin(angle + wing_angle)
-
-        return {
-            "type": "arrow",
-            "start": p0,
-            "end": pn,
-            "head_left": (left_x, left_y),
-            "head_right": (right_x, right_y),
-            "confidence": line_info["confidence"]
-        }
+    @staticmethod
+    def discretize_shape(shape_def: Dict[str, Any]) -> List[Point]:
+        """Samples mathematical points along snapped shape so erasing preserves perfect geometry."""
+        stype = shape_def.get("type")
+        pts: List[Point] = []
+        if stype in ("rectangle", "square"):
+            x, y, w, h = shape_def["rect"]
+            step, cx, cy = 5.0, x, y
+            while cx < x + w: pts.append((cx, y)); cx += step
+            while cy < y + h: pts.append((x + w, cy)); cy += step
+            while cx > x: pts.append((cx, y + h)); cx -= step
+            while cy > y: pts.append((x, cy)); cy -= step
+            pts.append((x, y))
+        elif stype in ("line", "arrow"):
+            s, e = shape_def["start"], shape_def["end"]
+            dist = math.hypot(e[0] - s[0], e[1] - s[1])
+            steps = max(2, int(dist / 4.0))
+            for i in range(steps + 1):
+                t = i / steps
+                pts.append((s[0] + (e[0] - s[0]) * t, s[1] + (e[1] - s[1]) * t))
+            if stype == "arrow":
+                hl, hr = shape_def["head_left"], shape_def["head_right"]
+                pts.extend([hl, e, hr])
+        elif stype == "circle":
+            cx, cy = shape_def["center"]
+            r = shape_def["radius"]
+            for deg in range(0, 360, 4):
+                rad = math.radians(deg)
+                pts.append((cx + r * math.cos(rad), cy + r * math.sin(rad)))
+            pts.append(pts[0])
+        return pts
 
     def _test_circle(self, points: List[Point], total_arc: float) -> Optional[Dict[str, Any]]:
         xs = [p[0] for p in points]

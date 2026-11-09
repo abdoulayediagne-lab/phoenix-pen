@@ -33,6 +33,7 @@ class HotkeyManager(QObject):
         self.config_mgr = config_mgr
         self._is_running = False
         self.is_active_fn: Optional[Any] = None
+        self._keys_down = set()
 
         # macOS Native EventTap handles
         self._tap = None
@@ -91,57 +92,54 @@ class HotkeyManager(QObject):
             has_shift = bool(flags & Quartz.kCGEventFlagMaskShift)
             has_ctrl = bool(flags & Quartz.kCGEventFlagMaskControl)
             is_down = (ev_type == Quartz.kCGEventKeyDown)
-            autorepeat = Quartz.CGEventGetIntegerValueField(event, Quartz.kCGKeyboardEventAutorepeat) if is_down else 0
+            if is_down:
+                if kc in self._keys_down:
+                    return None if kc in (2, 9, 14, 8, 35, 53, 6, 13) else event
+                self._keys_down.add(kc)
+            else:
+                self._keys_down.discard(kc)
 
             is_active = bool(self.is_active_fn and self.is_active_fn())
 
             # 1. Escape (kc 53)
             if kc == 53:
                 if is_active:
-                    if is_down and not autorepeat:
-                        self.sig_escape.emit()
+                    if is_down: self.sig_escape.emit()
                     return None
                 return event
 
             # 2. Undo (kc 6: Z, kc 13: W on AZERTY)
             if kc in (6, 13):
                 if is_active and (has_cmd or has_ctrl or has_alt):
-                    if is_down and not autorepeat:
-                        self.sig_undo.emit()
+                    if is_down: self.sig_undo.emit()
                     return None
                 if (has_cmd and has_shift) or (has_alt and not has_cmd):
-                    if is_down and not autorepeat:
-                        self.sig_undo.emit()
+                    if is_down: self.sig_undo.emit()
                     return None
 
             # 3. Fixed Ink (kc 2: D) — Cmd+D, Cmd+Shift+D, Option+D
             if kc == 2 and ((has_cmd and not has_alt) or (has_cmd and has_shift) or (has_alt and not has_cmd)):
-                if is_down and not autorepeat:
-                    self.sig_toggle_draw_fixed.emit()
+                if is_down: self.sig_toggle_draw_fixed.emit()
                 return None
 
             # 4. Vanishing Ink (kc 9: V) — Cmd+Shift+V or Option+V (Never plain Cmd+V paste)
             if kc == 9 and ((has_cmd and has_shift) or (has_alt and not has_cmd)):
-                if is_down and not autorepeat:
-                    self.sig_toggle_draw_vanishing.emit()
+                if is_down: self.sig_toggle_draw_vanishing.emit()
                 return None
 
             # 5. Eraser (kc 14: E) — Cmd+E, Cmd+Shift+E, Option+E
             if kc == 14 and ((has_cmd and not has_alt) or (has_cmd and has_shift) or (has_alt and not has_cmd)):
-                if is_down and not autorepeat:
-                    self.sig_toggle_eraser.emit()
+                if is_down: self.sig_toggle_eraser.emit()
                 return None
 
             # 6. Clear All (kc 8: C) — Cmd+Shift+C or Option+C (Never plain Cmd+C copy)
             if kc == 8 and ((has_cmd and has_shift) or (has_alt and not has_cmd)):
-                if is_down and not autorepeat:
-                    self.sig_clear_all.emit()
+                if is_down: self.sig_clear_all.emit()
                 return None
 
             # 7. Dashboard (kc 35: P) — Cmd+Shift+P or Option+P (Never plain Cmd+P print)
             if kc == 35 and ((has_cmd and has_shift) or (has_alt and not has_cmd)):
-                if is_down and not autorepeat:
-                    self.sig_open_config.emit()
+                if is_down: self.sig_open_config.emit()
                 return None
 
         except Exception as e:

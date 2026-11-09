@@ -104,6 +104,7 @@ class ConfigWindow(QDialog):
         self.fade_combo.addItems(["1.5 secondes", "2.0 secondes (Défaut)", "3.0 secondes", "5.0 secondes"])
         dur = float(self.config_mgr.get("drawing", "vanishing_duration", 2.0))
         self.fade_combo.setCurrentIndex({1.5: 0, 2.0: 1, 3.0: 2, 5.0: 3}.get(dur, 1))
+        self.fade_combo.currentIndexChanged.connect(self._on_fade_changed)
         ink_form.addRow("⏳ Disparition Encre :", self.fade_combo)
 
         # Stroke Width Slider (1 to 100 px)
@@ -116,15 +117,15 @@ class ConfigWindow(QDialog):
         wl = QHBoxLayout(); wl.addWidget(self.width_slider); wl.addWidget(self.width_label)
         ink_form.addRow("✏️ Épaisseur du trait (1-100px) :", wl)
 
-        # Eraser Width Slider (6 to 200 px)
+        # Eraser Width Slider (6 to 150 px)
         self.eraser_slider = QSlider(Qt.Orientation.Horizontal)
-        self.eraser_slider.setRange(6, 200)
+        self.eraser_slider.setRange(6, 150)
         ew = int(self.config_mgr.get("drawing", "eraser_width", 24))
         self.eraser_slider.setValue(ew)
         self.eraser_label = QLabel(f"{ew} px")
         self.eraser_slider.valueChanged.connect(self._on_eraser_changed)
         el = QHBoxLayout(); el.addWidget(self.eraser_slider); el.addWidget(self.eraser_label)
-        ink_form.addRow("🧹 Épaisseur de la gomme (6-200px) :", el)
+        ink_form.addRow("🧹 Épaisseur de la gomme (6-150px) :", el)
 
         self.glow_check = QCheckBox("Activer l'effet Néon Lumineux (Glow multicouche)")
         self.glow_check.setChecked(bool(self.config_mgr.get("drawing", "neon_glow", True)))
@@ -209,6 +210,10 @@ class ConfigWindow(QDialog):
         save_btn.setObjectName("saveBtn")
         save_btn.clicked.connect(self._save_settings)
         layout.addWidget(save_btn)
+
+    def _on_fade_changed(self, idx: int) -> None:
+        dur_map = {0: 1.5, 1: 2.0, 2: 3.0, 3: 5.0}
+        self.config_mgr.set("drawing", "vanishing_duration", dur_map.get(idx, 2.0))
 
     def _on_width_changed(self, val: int) -> None:
         self.width_label.setText(f"{val} px")

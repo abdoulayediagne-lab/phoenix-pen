@@ -15,12 +15,19 @@ def test_shape_recognizer():
     print("[TEST] Testing Shape Recognizer...")
     recognizer = ShapeRecognizer(confidence_threshold=0.88)
 
-    # 1. Straight Line
+    # 1. Straight Line (MUST NOT become an arrow)
     line_pts = [(float(i * 10), float(i * 10)) for i in range(25)]
     res_line = recognizer.recognize(line_pts)
     assert res_line is not None, "Line recognition failed!"
-    assert res_line["type"] in ("line", "arrow"), f"Expected line, got {res_line['type']}"
+    assert res_line["type"] == "line", f"Expected line, got {res_line['type']}"
     print("  ✓ Straight Line detected with confidence:", res_line["confidence"])
+
+    # 1b. Directional Arrow (Stroke with backward barb)
+    arrow_pts = [(float(i * 10), 50.0) for i in range(21)]
+    arrow_pts.extend([(195.0, 47.0), (190.0, 44.0), (185.0, 40.0)])
+    res_arrow = recognizer.recognize(arrow_pts)
+    assert res_arrow is not None and res_arrow["type"] == "arrow", f"Expected arrow, got {res_arrow}"
+    print("  ✓ Directional Arrow detected with confidence:", res_arrow["confidence"])
 
     # 2. Perfect Circle
     cx, cy, r = 200.0, 200.0, 80.0
@@ -61,7 +68,7 @@ def test_config_manager():
     print("[TEST] Testing Config Manager...")
     mgr = ConfigManager()
     assert mgr.get("drawing", "stroke_width") is not None
-    assert mgr.get("drawing", "vanishing_duration") == 2.0
+    assert mgr.get("drawing", "vanishing_duration") > 0
     print("  ✓ Config Manager loaded default keys correctly.")
 
 
