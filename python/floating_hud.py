@@ -85,6 +85,10 @@ class FloatingHUD(QFrame):
             }
         """)
 
+    def showEvent(self, event: Any) -> None:
+        super().showEvent(event)
+        self.set_native_window_level()
+
     def set_native_window_level(self) -> None:
         """Forces macOS Window Level to Status bar and joins all spaces."""
         if sys.platform == "darwin":
@@ -98,6 +102,8 @@ class FloatingHUD(QFrame):
                         | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary
                     )
                     nswin.setCollectionBehavior_(behavior)
+                    if hasattr(nswin, "setHidesOnDeactivate_"):
+                        nswin.setHidesOnDeactivate_(False)
                     nswin.setLevel_(AppKit.NSStatusWindowLevel)
                     nswin.orderFrontRegardless()
             except Exception as e:

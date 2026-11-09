@@ -79,34 +79,22 @@ class NeonRenderer:
         enable_glow: bool = True,
         glow_intensity: float = 0.75
     ) -> None:
-        """Renders path with multi-pass neon glow and bright metallic/sparkle core."""
+        """Renders path with pure vivid stroke in user color and subtle aura (no white core, no dark fringe)."""
+        painter.setBrush(Qt.BrushStyle.NoBrush)
         base_color = QColor(color_hex) if QColor(color_hex).isValid() else QColor("#00FF87")
 
         if enable_glow and width >= 2:
-            # 1. Outer Glow Layer
-            outer_glow = QColor(base_color)
-            outer_glow.setAlpha(max(0, min(255, int(45 * glow_intensity * alpha_factor))))
-            painter.setPen(QPen(outer_glow, width * 3.2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+            # Soft subtle aura matching chosen color
+            glow_col = QColor(base_color)
+            glow_col.setAlpha(max(0, min(255, int(55 * glow_intensity * alpha_factor))))
+            painter.setPen(QPen(glow_col, width + max(4.0, width * 0.35), Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
             painter.drawPath(path)
 
-            # 2. Mid Glow Layer
-            mid_glow = QColor(base_color)
-            mid_glow.setAlpha(max(0, min(255, int(95 * glow_intensity * alpha_factor))))
-            painter.setPen(QPen(mid_glow, width * 1.8, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-            painter.drawPath(path)
-
-        # 3. Vivid Core Stroke
+        # Pure solid vivid stroke in exact chosen color
         core_color = QColor(base_color)
-        core_color.setAlpha(max(0, min(255, int(240 * alpha_factor))))
+        core_color.setAlpha(max(0, min(255, int(255 * alpha_factor))))
         painter.setPen(QPen(core_color, width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
         painter.drawPath(path)
-
-        # 4. Metallic & Glitter Specular Core for Or, Argent & Brillance
-        if is_metallic_color(color_hex) and width >= 3:
-            sparkle_color = QColor(255, 255, 255, int(190 * alpha_factor))
-            sparkle_pen = QPen(sparkle_color, max(1.2, width * 0.32), Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
-            painter.setPen(sparkle_pen)
-            painter.drawPath(path)
 
     @staticmethod
     def draw_shape(

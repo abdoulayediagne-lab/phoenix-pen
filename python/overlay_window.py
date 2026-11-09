@@ -76,11 +76,11 @@ class OverlayWindow(QWidget):
                 nswin = view.window()
                 if nswin is not None:
                     nswin.setCollectionBehavior_(AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary)
+                    if hasattr(nswin, "setHidesOnDeactivate_"): nswin.setHidesOnDeactivate_(False)
                     nswin.setIgnoresMouseEvents_(ignore)
-                    if ignore:
-                        nswin.setLevel_(AppKit.NSFloatingWindowLevel)
-                    else:
-                        nswin.setAcceptsMouseMovedEvents_(True); nswin.setLevel_(AppKit.NSStatusWindowLevel - 1)
+                    nswin.setLevel_(AppKit.NSStatusWindowLevel - 1)
+                    if not ignore:
+                        nswin.setAcceptsMouseMovedEvents_(True)
                         nswin.makeKeyAndOrderFront_(None); nswin.orderFrontRegardless()
                         AppKit.NSRunningApplication.currentApplication().activateWithOptions_(AppKit.NSApplicationActivateIgnoringOtherApps)
                         nswin.invalidateCursorRectsForView_(view)
@@ -224,8 +224,7 @@ class OverlayWindow(QWidget):
     def paintEvent(self, event: QPaintEvent) -> None:
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing, True); p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
-        if self.mode != MODE_CLICK_THROUGH:
-            p.fillRect(self.rect(), QColor(0, 0, 0, 1))
+        p.setBrush(Qt.BrushStyle.NoBrush)
 
         for s in self.permanent_strokes:
             self._render_single_stroke(p, s, alpha=1.0)

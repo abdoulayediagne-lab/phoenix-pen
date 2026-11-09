@@ -1,5 +1,20 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Persistance Universelle Multi-Spaces / Plein Écran (setHidesOnDeactivate=False) & Suppression Définitive du Contour Sombre ("Serpent")
+- **Action :** 
+  - **Capsule Flottante Persistante sur Tous les Espaces et Onglets (`setHidesOnDeactivate_(False)`) :**
+    - Résolution de la disparition de la capsule lors des changements d'onglets, de bureaux virtuels (Mission Control) et de logiciels en plein écran (Antigravity, VS Code, Safari).
+    - Par défaut sous macOS, tout `NSPanel` possède `hidesOnDeactivate = True` et disparaît dès que l'application perd le focus.
+    - Application native de `nswin.setHidesOnDeactivate_(False)`, `NSStatusWindowLevel` et `showEvent` sur la capsule (`FloatingHUD`) et l'overlay (`OverlayWindow`).
+    - La capsule reste désormais visible en permanence au sommet de l'écran, exactement comme la capsule de Phoenix Voice, sur tous les bureaux et toutes les applications.
+  - **Suppression du Contour Sombre et de l'Effet "Serpent" (`NeonRenderer`) :**
+    - Suppression de `p.fillRect(self.rect(), QColor(0, 0, 0, 1))` dans `OverlayWindow` qui polluait le calque transparent avec une teinte noire à $1/255$, obscurcissant les bords antialiasing sur fond blanc.
+    - Suppression du cœur spéculaire blanc (`sparkle_pen`) qui créait un motif de bande centrale blanche dans le trait jaune, donnant un aspect de "peau de serpent".
+    - Remplacement du halo étalé à 3.2x par une aura subtile et douce dans la teinte exacte choisie, sans déborder ni créer d'artefact sombre.
+    - Ajout explicite de `painter.setBrush(Qt.BrushStyle.NoBrush)` pour éviter tout remplissage résiduel. Le trait jaune est désormais $100\%$ pur, homogène et net.
+- **Raison / Contexte :** Demandes immédiates d'Abdoulaye : avoir la capsule présente et opérationnelle partout sur n'importe quel onglet ou bureau comme Phoenix Voice, et supprimer le contour sombre et le motif serpent pour obtenir un tracé pur dans la couleur choisie.
+- **Impact & Validation :** Tests unitaires (`test_core.py`), simulations de flux (`test_full_flow.py`) et tests GUI (`test_gui.py`) 100% validés. Absence totale de pixels sombres sur fond blanc confirmée par analyse pixellaire.
+
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Matrice Multi-Écrans (Screen 0 + Screen 1), Distinction Trait Droit / Flèche, Découpage Vectoriel Solide des Rectangles & Slider Gomme 150px
 - **Action :** 
   - **Distinction Nette Trait Droit vs Flèche (`ShapeRecognizer`) :** 
