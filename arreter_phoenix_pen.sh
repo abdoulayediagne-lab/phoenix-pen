@@ -13,7 +13,7 @@ if [ -f "$PID_FILE" ]; then
     fi
     rm -f "$PID_FILE"
 else
-    pkill -f "python/run.py" || true
+    pkill -f "phoenix-pen.*python/(main|run)\.py" || true
     echo "⚡ Phoenix Pen arrêté."
 fi
 

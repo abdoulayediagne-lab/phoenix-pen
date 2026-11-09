@@ -1,7 +1,7 @@
 """
 Global Hotkey Manager for Phoenix Pen.
 Listens to system-wide keyboard shortcuts and emits thread-safe PyQt signals.
-Preloads macOS accessibility bindings and provides layout-agnostic character mapping.
+Supports multi-modifier combinations, virtual keycodes (vk), and dead-keys on macOS & Windows.
 Atlas Standard: < 250 lines.
 """
 
@@ -75,8 +75,8 @@ class HotkeyManager(QObject):
         self.start()
 
     def _on_press(self, key: Any) -> None:
-        """Tracks modifiers and triggers actions on key press."""
-        # Track modifier keys
+        """Tracks modifiers and triggers actions on key press (matching vk or char)."""
+        # 1. Track modifier keys
         if key in (keyboard.Key.alt, keyboard.Key.alt_l, keyboard.Key.alt_r):
             self.alt_down = True
             return
@@ -90,39 +90,49 @@ class HotkeyManager(QObject):
             self.shift_down = True
             return
 
+        # 2. Extract hardware vk & unicode char
+        vk = getattr(key, 'vk', None)
         char = getattr(key, 'char', None)
-        if not char:
-            return
+        char_lower = char.lower() if char else ''
 
-        char_lower = char.lower()
+        # Key identities (supports QWERTY/AZERTY hardware codes & dead-keys)
+        is_d = (vk == 2) or (char_lower == 'd') or (char == 'î')
+        is_v = (vk == 9) or (char_lower == 'v') or (char == '◊')
+        is_e = (vk == 14) or (char_lower == 'e') or (char == 'ê')
+        is_c = (vk == 8) or (char_lower == 'c') or (char == '©')
+        is_p = (vk == 35) or (char_lower == 'p') or (char == 'π')
+        is_z = (vk in (6, 13)) or (char_lower == 'z')
 
-        # Matches: Alt+Key OR Ctrl+Alt+Key OR Cmd+Shift+Key
-        is_mod_match = (
-            self.alt_down
-            or (self.ctrl_down and self.alt_down)
-            or (self.cmd_down and self.shift_down)
-        )
-
-        if is_mod_match:
-            # Encre Éphémère (v or macOS dead-key ◊)
-            if char_lower == 'v' or char == '◊':
-                self.sig_toggle_draw_vanishing.emit()
-            # Encre Fixe (d or macOS dead-key î)
-            elif char_lower == 'd' or char == 'î':
+        # 3. Trigger Actions Based on Active Modifiers
+        # Encre Fixe: Cmd+Shift+D OR Cmd+D OR Option+D OR Ctrl+Option+D
+        if is_d:
+            if (self.cmd_down and self.shift_down) or self.cmd_down or self.alt_down:
                 self.sig_toggle_draw_fixed.emit()
-            # Gomme (e or macOS dead-key ê)
-            elif char_lower == 'e' or char == 'ê':
+
+        # Encre Éphémère: Cmd+Shift+V OR Option+V OR Ctrl+Option+V
+        elif is_v:
+            if (self.cmd_down and self.shift_down) or self.alt_down or (self.ctrl_down and self.alt_down):
+                self.sig_toggle_draw_vanishing.emit()
+
+        # Gomme: Cmd+Shift+E OR Cmd+E OR Option+E OR Ctrl+Option+E
+        elif is_e:
+            if (self.cmd_down and self.shift_down) or self.cmd_down or self.alt_down:
                 self.sig_toggle_eraser.emit()
-            # Tout Effacer (c or macOS dead-key ©)
-            elif char_lower == 'c' or char == '©':
+
+        # Tout Effacer: Cmd+Shift+C OR Option+C OR Ctrl+Option+C
+        elif is_c:
+            if (self.cmd_down and self.shift_down) or self.alt_down or (self.ctrl_down and self.alt_down):
                 self.sig_clear_all.emit()
-            # Dashboard / Configuration (p or macOS dead-key π)
-            elif char_lower == 'p' or char == 'π':
+
+        # Dashboard / Config: Cmd+Shift+P OR Cmd+P OR Option+P OR Ctrl+Option+P
+        elif is_p:
+            if (self.cmd_down and self.shift_down) or self.cmd_down or self.alt_down:
                 self.sig_open_config.emit()
 
-        # Undo: Cmd+Z or Ctrl+Z
-        if (self.cmd_down or self.ctrl_down) and char_lower == 'z':
-            self.sig_undo.emit()
+        # Undo: Cmd+Z OR Ctrl+Z
+        elif is_z:
+            if self.cmd_down or self.ctrl_down:
+                self.sig_undo.emit()
 
     def _on_release(self, key: Any) -> None:
         """Releases modifier keys."""

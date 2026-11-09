@@ -4,12 +4,11 @@ Draggable, always-on-top, semi-translucent bar with 1-click tool toggles and Das
 Atlas Standard: < 250 lines.
 """
 
+import sys
 from typing import Any, Callable
-from PyQt6.QtCore import QPoint, QSize, Qt
-from PyQt6.QtGui import QColor, QFont, QIcon, QMouseEvent
-from PyQt6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QPushButton, QToolButton, QWidget
-)
+from PyQt6.QtCore import QPoint, Qt
+from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton
 
 
 class FloatingHUD(QFrame):
@@ -52,31 +51,31 @@ class FloatingHUD(QFrame):
         self.setFixedHeight(48)
         self.setStyleSheet("""
             FloatingHUD {
-                background-color: rgba(18, 22, 20, 235);
-                border: 1px solid rgba(0, 255, 135, 120);
+                background-color: rgba(18, 22, 20, 245);
+                border: 2px solid rgba(0, 255, 135, 180);
                 border-radius: 24px;
             }
             QPushButton {
-                background-color: rgba(30, 40, 35, 180);
+                background-color: rgba(30, 40, 35, 200);
                 color: #FFFFFF;
-                border: 1px solid rgba(0, 168, 89, 80);
+                border: 1px solid rgba(0, 168, 89, 120);
                 border-radius: 16px;
-                padding: 4px 10px;
-                font-size: 12px;
+                padding: 4px 12px;
+                font-size: 13px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: rgba(0, 168, 89, 160);
+                background-color: rgba(0, 168, 89, 220);
                 border: 1px solid #00FF87;
                 color: #FFFFFF;
             }
             QPushButton[active="true"] {
                 background-color: #00A859;
-                border: 1px solid #00FF87;
+                border: 2px solid #00FF87;
                 color: #000000;
             }
             QPushButton#dashBtn {
-                background-color: rgba(0, 255, 135, 200);
+                background-color: rgba(0, 255, 135, 230);
                 color: #0B0E0D;
                 border: none;
             }
@@ -85,31 +84,43 @@ class FloatingHUD(QFrame):
             }
         """)
 
+    def set_native_window_level(self) -> None:
+        """Forces macOS Window Level to Status bar (above overlay canvas)."""
+        if sys.platform == "darwin":
+            try:
+                import AppKit, objc
+                view = objc.objc_object(c_void_p=int(self.winId()))
+                nswin = view.window()
+                if nswin is not None:
+                    nswin.setLevel_(AppKit.NSStatusWindowLevel)
+            except Exception as e:
+                print(f"[FloatingHUD] macOS level error: {e}")
+
     def _init_ui(self) -> None:
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 4, 10, 4)
-        layout.setSpacing(6)
+        layout.setContentsMargins(12, 4, 12, 4)
+        layout.setSpacing(8)
 
         # Drag handle / Brand logo
         self.brand_lbl = QLabel("⚡")
-        self.brand_lbl.setStyleSheet("color: #00FF87; font-size: 14px; font-weight: bold;")
+        self.brand_lbl.setStyleSheet("color: #00FF87; font-size: 15px; font-weight: bold;")
         layout.addWidget(self.brand_lbl)
 
         # 1. Encre Fixe
         self.btn_fixed = QPushButton("🖋️ Fixe")
-        self.btn_fixed.setToolTip("Encre Fixe (Alt+D / Ctrl+Option+D)")
+        self.btn_fixed.setToolTip("Encre Fixe (Cmd+Shift+D ou Alt+D)")
         self.btn_fixed.clicked.connect(self._handle_fixed)
         layout.addWidget(self.btn_fixed)
 
         # 2. Encre Éphémère
         self.btn_vanishing = QPushButton("⏳ Fade")
-        self.btn_vanishing.setToolTip("Encre Éphémère (Alt+V / Ctrl+Option+V)")
+        self.btn_vanishing.setToolTip("Encre Éphémère (Cmd+Shift+V ou Alt+V)")
         self.btn_vanishing.clicked.connect(self._handle_vanishing)
         layout.addWidget(self.btn_vanishing)
 
         # 3. Gomme
         self.btn_eraser = QPushButton("🧹 Gomme")
-        self.btn_eraser.setToolTip("Gomme (Alt+E / Ctrl+Option+E)")
+        self.btn_eraser.setToolTip("Gomme (Cmd+Shift+E ou Alt+E)")
         self.btn_eraser.clicked.connect(self._handle_eraser)
         layout.addWidget(self.btn_eraser)
 
@@ -121,14 +132,14 @@ class FloatingHUD(QFrame):
 
         # 5. Clear All
         self.btn_clear = QPushButton("🗑️")
-        self.btn_clear.setToolTip("Tout Effacer (Alt+C / Ctrl+Option+C)")
+        self.btn_clear.setToolTip("Tout Effacer (Cmd+Shift+C ou Alt+C)")
         self.btn_clear.clicked.connect(self.on_clear)
         layout.addWidget(self.btn_clear)
 
         # 6. Dashboard
         self.btn_dash = QPushButton("⚙️ Dashboard")
         self.btn_dash.setObjectName("dashBtn")
-        self.btn_dash.setToolTip("Ouvrir le panneau de configuration")
+        self.btn_dash.setToolTip("Ouvrir les réglages Phoenix Pen")
         self.btn_dash.clicked.connect(self.on_dashboard)
         layout.addWidget(self.btn_dash)
 

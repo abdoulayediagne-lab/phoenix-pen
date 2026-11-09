@@ -70,12 +70,12 @@ if [ "\$(uname -m)" = "arm64" ] || [ "\$(sysctl -in hw.optional.arm64 2>/dev/nul
     ARCH_CMD="/usr/bin/arch -arm64"
 fi
 
-# Arrêter toute ancienne instance
-pkill -f "python/main.py" 2>/dev/null || true
+# Arrêter toute ancienne instance de Phoenix Pen uniquement
+pkill -f "phoenix-pen.*python/(main|run)\.py" 2>/dev/null || true
 rm -f "\$PROJECT_DIR/phoenix_pen.pid"
 
-# Lancer Phoenix Pen en ouvrant le Dashboard
-PYTHONPATH=python nohup \$ARCH_CMD "\$PYTHON_BIN" python/main.py --open-dashboard > /tmp/phoenix_pen.log 2>&1 &
+# Lancer Phoenix Pen en ouvrant le Dashboard (chemin absolu pour isoler des autres apps Phoenix)
+PYTHONPATH=python nohup \$ARCH_CMD "\$PYTHON_BIN" "\$PROJECT_DIR/python/main.py" --open-dashboard > /tmp/phoenix_pen.log 2>&1 &
 EOF
 
 chmod +x "$DESKTOP_APP/Contents/MacOS/Phoenix Pen"

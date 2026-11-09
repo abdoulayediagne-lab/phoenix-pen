@@ -1,9 +1,10 @@
 """
 Transparent Fullscreen Overlay Window for Phoenix Pen.
-Handles click-through toggles, mouse stroke capture, eraser, and rendering loop.
+Handles native click-through toggles, mouse stroke capture, eraser, and rendering loop.
 Atlas Standard: < 250 lines.
 """
 
+import sys
 from typing import Any, Dict, List, Optional, Tuple
 from PyQt6.QtCore import QPointF, Qt
 from PyQt6.QtGui import QMouseEvent, QPaintEvent, QPainter
@@ -22,7 +23,7 @@ Point = Tuple[float, float]
 
 
 class OverlayWindow(QWidget):
-    """Fullscreen translucent overlay supporting click-through and neon drawing."""
+    """Fullscreen translucent overlay supporting native OS click-through and neon drawing."""
 
     def __init__(self, config_mgr: Any) -> None:
         super().__init__()
@@ -45,25 +46,45 @@ class OverlayWindow(QWidget):
 
     def _init_window(self) -> None:
         """Initializes frameless, translucent, always-on-top window."""
-        flags = Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.SubWindow
+        flags = (
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.SubWindow
+        )
         self.setWindowFlags(flags)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setMouseTracking(True)
         self.set_mode(MODE_CLICK_THROUGH)
+
+    def _set_native_click_through(self, ignore: bool) -> None:
+        """Configures OS-level event pass-through (Cocoa on macOS / Win32 on Windows)."""
+        if sys.platform == "darwin":
+            try:
+                import AppKit, objc
+                view = objc.objc_object(c_void_p=int(self.winId()))
+                nswin = view.window()
+                if nswin is not None:
+                    nswin.setIgnoresMouseEvents_(ignore)
+                    nswin.setLevel_(AppKit.NSFloatingWindowLevel)
+            except Exception as e:
+                print(f"[OverlayWindow] macOS click-through warning: {e}")
 
     def set_mode(self, new_mode: str) -> None:
         """Switches interaction mode (click-through vs drawing/eraser)."""
         self.mode = new_mode
         if new_mode == MODE_CLICK_THROUGH:
             self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+            self._set_native_click_through(True)
             self.setCursor(Qt.CursorShape.ArrowCursor)
             self.cursor_pos = None
         else:
             self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
+            self._set_native_click_through(False)
             if self.config_mgr.get("drawing", "cursor_dot", True):
                 self.setCursor(Qt.CursorShape.BlankCursor)
             else:
                 self.setCursor(Qt.CursorShape.CrossCursor)
+            self.raise_()
         self.update()
 
     def toggle_mode(self, target_mode: str) -> None:
@@ -193,4 +214,3 @@ class OverlayWindow(QWidget):
         else:
             path = NeonRenderer.create_smooth_path(stroke_data.get("points", []))
             NeonRenderer.draw_neon_stroke(painter, path, color, width, alpha_factor=alpha, enable_glow=glow)
-

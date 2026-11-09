@@ -74,7 +74,7 @@ class PhoenixPenApp:
         self.overlay.show()
 
     def _position_hud(self) -> None:
-        """Positions HUD pill at top-center of primary screen."""
+        """Positions HUD pill at top-center of primary screen and elevates its z-order."""
         if not self.config_mgr.get("system", "floating_hud", True):
             return
         screen = QGuiApplication.primaryScreen()
@@ -84,6 +84,8 @@ class PhoenixPenApp:
             y = geom.y() + 45
             self.hud.move(x, y)
             self.hud.show()
+            self.hud.raise_()
+            self.hud.set_native_window_level()
 
     def _set_mode(self, target_mode: str) -> None:
         """Toggles drawing mode and updates visual state of HUD."""
@@ -93,6 +95,9 @@ class PhoenixPenApp:
         else:
             self.overlay.set_mode(target_mode)
             self.hud.set_active_mode(target_mode)
+        # Ensure HUD is always on top
+        self.hud.raise_()
+        self.hud.set_native_window_level()
 
     def _wire_hotkeys(self) -> None:
         """Connects background thread hotkey signals to GUI methods."""
@@ -123,6 +128,8 @@ class PhoenixPenApp:
         self.hotkeys.reload()
         if self.config_mgr.get("system", "floating_hud", True):
             self.hud.show()
+            self.hud.raise_()
+            self.hud.set_native_window_level()
         else:
             self.hud.hide()
         self.overlay.update()

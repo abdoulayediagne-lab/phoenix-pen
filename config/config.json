@@ -8,8 +8,8 @@
     "open_config": "<alt>+p"
   },
   "drawing": {
-    "stroke_width": 4,
-    "active_color": "#00FF87",
+    "stroke_width": 5,
+    "active_color": "#FFEA00",
     "neon_glow": true,
     "neon_intensity": 0.75,
     "vanishing_duration": 2.0,
@@ -32,7 +32,7 @@
   ],
   "system": {
     "start_at_login": false,
-    "fps_limit": 60
+    "fps_limit": 60,
+    "floating_hud": true
   }
 }
-
