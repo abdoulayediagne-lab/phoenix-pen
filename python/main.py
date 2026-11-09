@@ -67,14 +67,16 @@ class PhoenixPenApp:
             self.open_config()
 
     def _setup_screens(self) -> None:
-        """Adapts overlay geometry to full multi-monitor virtual desktop."""
+        """Adapts overlay geometry to full multi-monitor virtual desktop and joins all Spaces."""
         screen = QGuiApplication.primaryScreen()
         if screen:
             self.overlay.setGeometry(screen.virtualGeometry())
         self.overlay.show()
+        # Initialize native multi-space pass-through
+        self.overlay._set_native_click_through(True)
 
     def _position_hud(self) -> None:
-        """Positions HUD pill at top-center of primary screen and elevates its z-order."""
+        """Positions HUD pill below Phoenix Voice (y=68) and elevates z-order."""
         if not self.config_mgr.get("system", "floating_hud", True):
             return
         screen = QGuiApplication.primaryScreen()
@@ -82,7 +84,7 @@ class PhoenixPenApp:
             geom = screen.availableGeometry()
             w = 560
             x = geom.x() + (geom.width() - w) // 2
-            y = geom.y() + 15
+            y = geom.y() + 68  # Positioned right under Phoenix Voice HUD
             self.hud.move(x, y)
             self.hud.show()
             self.hud.raise_()

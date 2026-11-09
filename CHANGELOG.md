@@ -1,5 +1,13 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Correctif Espace Plein Écran macOS (CanJoinAllSpaces & Y-Offset HUD)
+- **Action :** 
+  - Ajout du comportement Cocoa `NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorFullScreenAuxiliary` sur l'Overlay et sur le Floating HUD : sous macOS, les applications en plein écran (comme VS Code dans le screenshot d'Abdoulaye) masquent automatiquement toutes les fenêtres flottantes qui ne déclarent pas explicitement ce comportement.
+  - Ajustement de la position verticale du Floating HUD (`y = 81px`) pour éviter tout chevauchement avec la pilule de Phoenix Voice (`01:25`) située au-dessus.
+  - Activation immédiate du calque avec `orderFrontRegardless()` et `activateWindow()` lors du passage en mode dessin pour intercepter les tracés de souris au-dessus des éditeurs en plein écran.
+- **Raison / Contexte :** Résolution du cas où l'utilisateur travaille dans un Space macOS plein écran (VS Code) où l'overlay ne s'affichait pas et la souris sélectionnait du texte.
+- **Impact & Validation :** HUD et Overlay visibles et interactifs même au-dessus des applications en plein écran. Tracé validé.
+
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Résolution Majeure : QNSPanel Natif Cocoa, Curseur QCursor Matériel & Centrage HUD
 - **Action :** 
   - Remplacement du flag `Qt.WindowType.SubWindow` par `Qt.WindowType.Tool` sur l'Overlay et sur le Floating HUD : sous macOS, `SubWindow` sans parent ne créait aucun `NSWindow` Cocoa natif, rendant les deux fenêtres totalement invisibles et non interactives.

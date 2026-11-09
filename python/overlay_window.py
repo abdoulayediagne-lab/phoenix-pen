@@ -59,15 +59,24 @@ class OverlayWindow(QWidget):
         self.set_mode(MODE_CLICK_THROUGH)
 
     def _set_native_click_through(self, ignore: bool) -> None:
-        """Configures OS-level event pass-through (Cocoa on macOS / Win32 on Windows)."""
+        """Configures OS-level event pass-through and multi-space support."""
         if sys.platform == "darwin":
             try:
                 import AppKit, objc
                 view = objc.objc_object(c_void_p=int(self.winId()))
                 nswin = view.window()
                 if nswin is not None:
+                    behavior = (
+                        AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces
+                        | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary
+                    )
+                    nswin.setCollectionBehavior_(behavior)
                     nswin.setIgnoresMouseEvents_(ignore)
-                    nswin.setLevel_(AppKit.NSFloatingWindowLevel)
+                    if ignore:
+                        nswin.setLevel_(AppKit.NSFloatingWindowLevel)
+                    else:
+                        nswin.setLevel_(AppKit.NSStatusWindowLevel - 1)
+                        nswin.orderFrontRegardless()
             except Exception as e:
                 print(f"[OverlayWindow] macOS click-through warning: {e}")
 
@@ -83,13 +92,11 @@ class OverlayWindow(QWidget):
         if not base_color.isValid():
             base_color = QColor("#00FF87")
 
-        # Glow ring
         glow = QColor(base_color)
         glow.setAlpha(120)
         painter.setPen(QPen(glow, 3.5))
         painter.drawEllipse(3, 3, 18, 18)
 
-        # Core dot
         painter.setPen(QPen(base_color, 1.5))
         painter.setBrush(QBrush(QColor(255, 255, 255, 245)))
         painter.drawEllipse(7, 7, 10, 10)
@@ -114,6 +121,7 @@ class OverlayWindow(QWidget):
                 color = self.config_mgr.get("drawing", "active_color", "#00FF87")
                 self.setCursor(self._create_neon_cursor(color))
             self.raise_()
+            self.activateWindow()
         self.update()
 
     def toggle_mode(self, target_mode: str) -> None:

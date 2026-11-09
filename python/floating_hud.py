@@ -86,14 +86,20 @@ class FloatingHUD(QFrame):
         """)
 
     def set_native_window_level(self) -> None:
-        """Forces macOS Window Level to Status bar (above overlay canvas)."""
+        """Forces macOS Window Level to Status bar and joins all spaces."""
         if sys.platform == "darwin":
             try:
                 import AppKit, objc
                 view = objc.objc_object(c_void_p=int(self.winId()))
                 nswin = view.window()
                 if nswin is not None:
+                    behavior = (
+                        AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces
+                        | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary
+                    )
+                    nswin.setCollectionBehavior_(behavior)
                     nswin.setLevel_(AppKit.NSStatusWindowLevel)
+                    nswin.orderFrontRegardless()
             except Exception as e:
                 print(f"[FloatingHUD] macOS level error: {e}")
 
