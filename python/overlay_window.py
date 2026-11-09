@@ -40,7 +40,7 @@ class OverlayWindow(QWidget):
         self.fade_manager = FadeManager(self.update, fps=fps)
         conf = float(self.config_mgr.get("drawing", "shape_confidence_threshold", 0.88))
         self.recognizer = ShapeRecognizer(confidence_threshold=conf)
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setMouseTracking(True)
         self.config_mgr.add_listener(self._on_config_changed)
@@ -79,9 +79,9 @@ class OverlayWindow(QWidget):
                     if hasattr(nswin, "setHidesOnDeactivate_"): nswin.setHidesOnDeactivate_(False)
                     nswin.setIgnoresMouseEvents_(ignore)
                     nswin.setLevel_(AppKit.NSStatusWindowLevel - 1)
+                    nswin.orderFrontRegardless()
                     if not ignore:
                         nswin.setAcceptsMouseMovedEvents_(True)
-                        nswin.orderFrontRegardless()
                         nswin.invalidateCursorRectsForView_(view)
             except Exception as e:
                 print(f"[OverlayWindow] macOS click-through warning: {e}")

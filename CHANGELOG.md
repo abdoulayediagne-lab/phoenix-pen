@@ -1,5 +1,17 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Migration QNSPanel de l'Overlay (Multi-Bureaux 100%), Fin des Clics Sauvages vers Aperçu
+- **Action :** 
+  - **Conversion d'OverlayWindow en QNSPanel Natif (`Qt.WindowType.Tool`) :**
+    - Identification de la cause de l'invisibilité du feutre sur les autres bureaux : seule la capsule `FloatingHUD` avait le flag `Tool` (devenant un `QNSPanel` rejoignant tous les espaces). `OverlayWindow` était un simple `QNSWindow` rattaché au Bureau 1.
+    - Ajout du flag `Qt.WindowType.Tool` sur `OverlayWindow` pour le promouvoir en `QNSPanel` Cocoa natif doté de `NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorFullScreenAuxiliary`.
+    - L'overlay de dessin est désormais présent physiquement au premier plan sur **tous les bureaux virtuels et toutes les applications plein écran**.
+  - **Fin des Fuites de Clics vers Aperçu / Preview :**
+    - Sur les bureaux secondaires, les clics de souris traversaient l'écran pour tomber directement dans les outils d'annotation natifs d'Aperçu (générant un rectangle système avec poignée de redimensionnement circulaire et bordure grise).
+    - `OverlayWindow` intercepte désormais immédiatement tous les clics et tracés sur n'importe quel bureau avec niveau Cocoa 24, sans laisser passer aucun événement vers Aperçu ou d'autres applications.
+- **Raison / Contexte :** Remontée d'Abdoulaye : impossibilité de dessiner sur les bureaux secondaires via `Cmd+D` et apparition d'un rectangle avec bordure grise et poignée (provenant en réalité d'Aperçu).
+- **Impact & Validation :** Tests unitaires (`test_core.py`), de flux (`test_full_flow.py`) et GUI (`test_gui.py`) 100% validés. Promotion Cocoa `QNSPanel` confirmée sur toutes les instances d'overlay.
+
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Fin Téléportation Spaces (Suppression Focus/Activate), Gomme 100% Fonctionnelle sur Ovales & Tracé Pur Solide
 - **Action :** 
   - **Fin Définitive du Changement d'Espace/Onglet Intempestif :** 
