@@ -8,7 +8,7 @@ import sys
 from typing import Any, Dict, List, Optional, Tuple
 from PyQt6.QtCore import QBuffer, QIODevice, QPointF, Qt
 from PyQt6.QtGui import (
-    QBrush, QColor, QCursor, QMouseEvent, QPaintEvent, QPainter, QPen, QPixmap
+    QBrush, QColor, QCursor, QGuiApplication, QMouseEvent, QPaintEvent, QPainter, QPen, QPixmap
 )
 from PyQt6.QtWidgets import QApplication, QWidget
 
@@ -42,14 +42,17 @@ class OverlayWindow(QWidget):
         self._init_window()
 
     def _init_window(self) -> None:
-        """Initializes frameless, translucent, always-on-top QNSWindow."""
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setMouseTracking(True)
         self.set_mode(MODE_CLICK_THROUGH)
 
+    def _adapt_to_active_screen(self) -> None:
+        screen = QGuiApplication.screenAt(QCursor.pos()) or QGuiApplication.primaryScreen()
+        if screen:
+            self.setGeometry(screen.geometry())
+
     def _set_native_click_through(self, ignore: bool) -> None:
-        """Configures OS-level event pass-through and multi-space support."""
         if sys.platform == "darwin":
             try:
                 import AppKit, objc
@@ -75,7 +78,6 @@ class OverlayWindow(QWidget):
                 print(f"[OverlayWindow] macOS click-through warning: {e}")
 
     def _create_neon_cursor(self, color_hex: str) -> Tuple[QCursor, QPixmap]:
-        """Generates a hardware-rendered glowing neon dot cursor and pixmap."""
         pix = QPixmap(32, 32)
         pix.fill(Qt.GlobalColor.transparent)
         p = QPainter(pix)
@@ -118,7 +120,6 @@ class OverlayWindow(QWidget):
                 pass
 
     def set_mode(self, new_mode: str) -> None:
-        """Switches interaction mode (click-through vs drawing/eraser)."""
         self.mode = new_mode
         while QApplication.overrideCursor() is not None:
             QApplication.restoreOverrideCursor()
@@ -130,6 +131,7 @@ class OverlayWindow(QWidget):
             self.unsetCursor()
             self._restore_cocoa_cursor()
         else:
+            self._adapt_to_active_screen()
             self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
             self._set_native_click_through(False)
             if new_mode == MODE_ERASER:
@@ -169,6 +171,7 @@ class OverlayWindow(QWidget):
             else:
                 self.current_points = [(pos.x(), pos.y())]
             self.update()
+            event.accept()
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         pos = event.position()
@@ -179,6 +182,7 @@ class OverlayWindow(QWidget):
             elif self.mode in (MODE_DRAW_FIXED, MODE_DRAW_VANISHING):
                 self.current_points.append((pos.x(), pos.y()))
         self.update()
+        event.accept()
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton and self.current_points:
@@ -203,6 +207,7 @@ class OverlayWindow(QWidget):
 
             self.current_points = []
             self.update()
+            event.accept()
 
     def _erase_at(self, x: float, y: float, radius: float = 20.0) -> None:
         survived = [
@@ -217,6 +222,9 @@ class OverlayWindow(QWidget):
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+        if self.mode != MODE_CLICK_THROUGH:
+            p.fillRect(self.rect(), QColor(0, 0, 0, 1))
+
         for s in self.permanent_strokes:
             self._render_single_stroke(p, s, alpha=1.0)
         for vs in self.fade_manager.strokes:

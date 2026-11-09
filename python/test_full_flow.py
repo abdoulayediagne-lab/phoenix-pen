@@ -74,18 +74,21 @@ def test_full_flow():
     hotkeys.cmd_down = True
     hotkeys.shift_down = True
     hotkeys._on_press(FakeKey(vk=2))
+    hotkeys._on_release(FakeKey(vk=2))
     assert "fixed" in signals_received, "Cmd+Shift+D failed!"
     print("     ✓ Cmd+Shift+D triggered fixed mode signal.")
 
     # Simulate Cmd+D (d key vk=2)
     hotkeys.shift_down = False
     hotkeys._on_press(FakeKey(vk=2))
+    hotkeys._on_release(FakeKey(vk=2))
     assert signals_received.count("fixed") == 2, "Cmd+D failed!"
     print("     ✓ Cmd+D triggered fixed mode signal.")
 
     # Simulate Cmd+Shift+V (v key vk=9)
     hotkeys.shift_down = True
     hotkeys._on_press(FakeKey(vk=9))
+    hotkeys._on_release(FakeKey(vk=9))
     assert "vanishing" in signals_received, "Cmd+Shift+V failed!"
     print("     ✓ Cmd+Shift+V triggered vanishing mode signal.")
 
@@ -94,6 +97,7 @@ def test_full_flow():
     hotkeys.shift_down = False
     hotkeys.alt_down = True
     hotkeys._on_press(FakeKey(char="◊"))
+    hotkeys._on_release(FakeKey(char="◊"))
     assert signals_received.count("vanishing") == 2, "Option+V dead-key failed!"
     print("     ✓ Option+V (dead-key ◊) triggered vanishing mode signal.")
 

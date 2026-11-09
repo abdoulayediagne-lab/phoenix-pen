@@ -5,7 +5,7 @@ Atlas Standard: < 250 lines.
 """
 
 import sys
-from PyQt6.QtGui import QGuiApplication
+from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QApplication
 
 from config_gui import ConfigWindow
@@ -62,14 +62,15 @@ class PhoenixPenApp:
         self.hotkeys.start()
 
         self.config_dialog: ConfigWindow = None
-        if open_dashboard_on_start or self.config_mgr.get("system", "open_dashboard_at_start", True):
+        # Default to background ghost mode (no dashboard at start)
+        if open_dashboard_on_start or self.config_mgr.get("system", "open_dashboard_at_start", False):
             self.open_config()
 
     def _setup_screens(self) -> None:
-        """Adapts overlay geometry to full multi-monitor virtual desktop and joins all Spaces."""
-        screen = QGuiApplication.primaryScreen()
+        """Adapts overlay geometry to active screen and joins all Spaces."""
+        screen = QGuiApplication.screenAt(QCursor.pos()) or QGuiApplication.primaryScreen()
         if screen:
-            self.overlay.setGeometry(screen.virtualGeometry())
+            self.overlay.setGeometry(screen.geometry())
         self.overlay.show()
         self.overlay._set_native_click_through(True)
 

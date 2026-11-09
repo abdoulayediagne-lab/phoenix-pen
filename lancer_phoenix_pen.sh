@@ -15,4 +15,4 @@ if [ "$(uname -m)" = "arm64" ] || [ "$(sysctl -in hw.optional.arm64 2>/dev/null)
 fi
 
 echo "⚡ Démarrage de Phoenix Pen..."
-exec $ARCH_CMD "$PYTHON_EXEC" "$DIR/python/main.py" --open-dashboard "$@"
+exec $ARCH_CMD "$PYTHON_EXEC" "$DIR/python/main.py" "$@"

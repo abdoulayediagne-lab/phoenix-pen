@@ -1,5 +1,14 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Correctif Majeur : Capture Réelle Tracé Souris, Swallowing Raccourcis & Mode Ghost Zéro Dashboard
+- **Action :** 
+  - **Capture Réelle du Tracé Souris (Résolution Multi-Écrans macOS Spaces) :** Remplacement de `virtualGeometry()` (qui étendait artificiellement une fenêtre unique sur deux écrans `3648x1117px` et provoquait le blocage des clics par macOS WindowServer) par un dimensionnement dynamique sur l'écran physique actif (`screen.geometry()`). Ajout d'une surface d'interception invisible (`alpha=1/255`) garantissant 100% de capture des clics et glissers souris sans fuite vers VS Code ou Safari.
+  - **Swallowing Quartz Natif & Garde d'Auto-Répétition :** Interception native macOS (`darwin_intercept`) des touches `Cmd+D`, `Cmd+Shift+D`, `Option+D`, etc., empêchant Safari d'ouvrir la fenêtre de signets et VS Code d'ouvrir "Run & Debug" ou de sélectionner du texte. Garde anti-répétition physique empêchant le raccourci de se désactiver tout seul lors d'un appui prolongé.
+  - **Mode Ghost Pur (Zéro Dashboard au Démarrage) :** Désactivation de l'ouverture automatique du Dashboard au lancement (aligné sur l'expérience Phoenix Voice). Phoenix Pen démarre discrètement en tâche de fond avec la capsule et le system tray uniquement.
+- **Raison / Contexte :** Signalement par Abdoulaye de la disparition du curseur au moment du clic souris et de l'interférence avec les fenêtres hôtes.
+- **Impact & Validation :** Tracé souris 100% fonctionnel, raccourcis interceptés sans conflit avec VS Code ou Safari, démarrage instantané en arrière-plan.
+
+
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Coexistence Totale Phoenix Voice & Curseur Matériel Natif NSCursor
 - **Action :** 
   - **Coexistence Parfaite avec Phoenix Voice :** Décalage de la capsule Phoenix Pen à `y = 112px` (la capsule Phoenix Voice s'étend de `y = 55px` à `y = 99px`), éliminant tout chevauchement ou conflit visuel. Les deux capsules cohabitent harmonieusement sans empiéter l'une sur l'autre, et Phoenix Pen reste repositionnable librement au glisser-déposer.

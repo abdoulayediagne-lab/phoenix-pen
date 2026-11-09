@@ -75,8 +75,8 @@ pkill -9 -f "phoenix-pen.*main\.py" 2>/dev/null || true
 pkill -9 -f "phoenix-pen.*run\.py" 2>/dev/null || true
 rm -f "\$PROJECT_DIR/phoenix_pen.pid"
 
-# Lancer Phoenix Pen en ouvrant le Dashboard (chemin absolu pour isoler des autres apps Phoenix)
-PYTHONPATH=python nohup \$ARCH_CMD "\$PYTHON_BIN" "\$PROJECT_DIR/python/main.py" --open-dashboard > /tmp/phoenix_pen.log 2>&1 &
+# Lancer Phoenix Pen en arriere-plan (discret dans le system tray et la capsule)
+PYTHONPATH=python nohup \$ARCH_CMD "\$PYTHON_BIN" "\$PROJECT_DIR/python/main.py" > /tmp/phoenix_pen.log 2>&1 &
 EOF
 
 chmod +x "$DESKTOP_APP/Contents/MacOS/Phoenix Pen"

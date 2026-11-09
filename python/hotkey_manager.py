@@ -1,17 +1,16 @@
 """
 Global Hotkey Manager for Phoenix Pen.
-Listens to system-wide keyboard shortcuts and emits thread-safe PyQt signals.
-Supports multi-modifier combinations, virtual keycodes (vk), and dead-keys on macOS & Windows.
+Listens to system-wide shortcuts with key-repeat guard and macOS native event swallowing.
 Atlas Standard: < 250 lines.
 """
 
 import sys
-from typing import Any
+from typing import Any, Set
 from PyQt6.QtCore import QObject, pyqtSignal
 
 if sys.platform == "darwin":
     try:
-        import ApplicationServices, HIServices
+        import ApplicationServices, HIServices, Quartz
         _ = getattr(HIServices, "AXIsProcessTrusted", None)
         _ = getattr(ApplicationServices, "AXIsProcessTrusted", None)
     except Exception:
@@ -41,19 +40,41 @@ class HotkeyManager(QObject):
         self.ctrl_down = False
         self.cmd_down = False
         self.shift_down = False
+        self._keys_pressed: Set[Any] = set()
+
+    def _swallow_darwin_hotkeys(self, ev_type: Any, event: Any) -> Any:
+        """Swallows hotkeys on macOS to prevent host apps (VS Code, Safari) from stealing focus."""
+        if sys.platform != "darwin":
+            return event
+        try:
+            import Quartz
+            flags = Quartz.CGEventGetFlags(event)
+            has_cmd = bool(flags & Quartz.kCGEventFlagMaskCommand)
+            has_alt = bool(flags & Quartz.kCGEventFlagMaskAlternate)
+            kc = Quartz.CGEventGetIntegerValueField(event, Quartz.kCGKeyboardEventKeycode)
+            # 2: D, 9: V, 14: E, 8: C, 35: P
+            if (has_cmd or has_alt) and kc in (2, 9, 14, 8, 35):
+                return None
+        except Exception:
+            pass
+        return event
 
     def start(self) -> None:
         if self._is_running:
             self.stop()
         try:
-            self.listener = keyboard.Listener(
-                on_press=self._on_press,
-                on_release=self._on_release
-            )
+            kwargs = {
+                "on_press": self._on_press,
+                "on_release": self._on_release
+            }
+            if sys.platform == "darwin":
+                kwargs["darwin_intercept"] = self._swallow_darwin_hotkeys
+
+            self.listener = keyboard.Listener(**kwargs)
             self.listener.daemon = True
             self.listener.start()
             self._is_running = True
-            print("[HotkeyManager] Global hotkey listener active.")
+            print("[HotkeyManager] Global hotkey listener active (event-swallowing enabled).")
         except Exception as e:
             print(f"[HotkeyManager] Error starting listener: {e}")
 
@@ -65,18 +86,18 @@ class HotkeyManager(QObject):
                 pass
             self.listener = None
         self._is_running = False
+        self._keys_pressed.clear()
 
     def reload(self) -> None:
         self.stop()
         self.start()
 
     def _on_press(self, key: Any) -> None:
-        # Escape cancels drawing/eraser mode
         if key == keyboard.Key.esc:
             self.sig_escape.emit()
             return
 
-        # 1. Track modifier keys
+        # Track modifier keys
         if key in (keyboard.Key.alt, keyboard.Key.alt_l, keyboard.Key.alt_r):
             self.alt_down = True
             return
@@ -90,10 +111,15 @@ class HotkeyManager(QObject):
             self.shift_down = True
             return
 
-        # 2. Extract hardware vk & unicode char
         vk = getattr(key, 'vk', None)
         char = getattr(key, 'char', None)
         char_lower = char.lower() if char else ''
+        key_id = (vk, char_lower)
+
+        # Key-repeat guard: only trigger ONCE per physical press down
+        if key_id in self._keys_pressed:
+            return
+        self._keys_pressed.add(key_id)
 
         is_d = (vk == 2) or (char_lower == 'd') or (char == 'î')
         is_v = (vk == 9) or (char_lower == 'v') or (char == '◊')
@@ -102,7 +128,6 @@ class HotkeyManager(QObject):
         is_p = (vk == 35) or (char_lower == 'p') or (char == 'π')
         is_z = (vk in (6, 13)) or (char_lower == 'z')
 
-        # 3. Trigger Actions Based on Active Modifiers
         if is_d:
             if (self.cmd_down and self.shift_down) or self.cmd_down or self.alt_down:
                 self.sig_toggle_draw_fixed.emit()
@@ -136,3 +161,8 @@ class HotkeyManager(QObject):
             self.cmd_down = False
         elif key in (keyboard.Key.shift, keyboard.Key.shift_l, keyboard.Key.shift_r):
             self.shift_down = False
+
+        vk = getattr(key, 'vk', None)
+        char = getattr(key, 'char', None)
+        char_lower = char.lower() if char else ''
+        self._keys_pressed.discard((vk, char_lower))
