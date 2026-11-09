@@ -1,6 +1,6 @@
 """
 Transparent Fullscreen Overlay Window for Phoenix Pen.
-Handles native click-through toggles, mouse stroke capture, eraser, and rendering loop.
+Handles native click-through toggles, mouse stroke capture, dynamic eraser, and rendering loop.
 Atlas Standard: < 250 lines.
 """
 
@@ -39,9 +39,6 @@ class OverlayWindow(QWidget):
         self.fade_manager = FadeManager(self.update, fps=fps)
         conf = float(self.config_mgr.get("drawing", "shape_confidence_threshold", 0.88))
         self.recognizer = ShapeRecognizer(confidence_threshold=conf)
-        self._init_window()
-
-    def _init_window(self) -> None:
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setMouseTracking(True)
@@ -59,10 +56,7 @@ class OverlayWindow(QWidget):
                 view = objc.objc_object(c_void_p=int(self.winId()))
                 nswin = view.window()
                 if nswin is not None:
-                    nswin.setCollectionBehavior_(
-                        AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces
-                        | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary
-                    )
+                    nswin.setCollectionBehavior_(AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary)
                     nswin.setIgnoresMouseEvents_(ignore)
                     if ignore:
                         nswin.setLevel_(AppKit.NSFloatingWindowLevel)
@@ -70,9 +64,7 @@ class OverlayWindow(QWidget):
                         nswin.setLevel_(AppKit.NSStatusWindowLevel - 1)
                         nswin.makeKeyAndOrderFront_(None)
                         nswin.orderFrontRegardless()
-                        AppKit.NSRunningApplication.currentApplication().activateWithOptions_(
-                            AppKit.NSApplicationActivateIgnoringOtherApps
-                        )
+                        AppKit.NSRunningApplication.currentApplication().activateWithOptions_(AppKit.NSApplicationActivateIgnoringOtherApps)
                         nswin.invalidateCursorRectsForView_(view)
             except Exception as e:
                 print(f"[OverlayWindow] macOS click-through warning: {e}")
@@ -83,13 +75,9 @@ class OverlayWindow(QWidget):
         p = QPainter(pix)
         p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         base = QColor(color_hex) if QColor(color_hex).isValid() else QColor("#00FF87")
-        glow = QColor(base)
-        glow.setAlpha(140)
-        p.setPen(QPen(glow, 4.0))
-        p.drawEllipse(4, 4, 24, 24)
-        p.setPen(QPen(base, 1.5))
-        p.setBrush(QBrush(QColor(255, 255, 255, 250)))
-        p.drawEllipse(10, 10, 12, 12)
+        glow = QColor(base); glow.setAlpha(140)
+        p.setPen(QPen(glow, 4.0)); p.drawEllipse(4, 4, 24, 24)
+        p.setPen(QPen(base, 1.5)); p.setBrush(QBrush(QColor(255, 255, 255, 250))); p.drawEllipse(10, 10, 12, 12)
         p.end()
         return QCursor(pix, 16, 16), pix
 
@@ -97,27 +85,18 @@ class OverlayWindow(QWidget):
         if sys.platform == "darwin":
             try:
                 import AppKit, Foundation
-                buf = QBuffer()
-                buf.open(QIODevice.OpenModeFlag.ReadWrite)
-                pix.save(buf, "PNG")
-                raw = buf.data().data()
-                data = Foundation.NSData.dataWithBytes_length_(raw, len(raw))
+                buf = QBuffer(); buf.open(QIODevice.OpenModeFlag.ReadWrite); pix.save(buf, "PNG")
+                raw = buf.data().data(); data = Foundation.NSData.dataWithBytes_length_(raw, len(raw))
                 img = AppKit.NSImage.alloc().initWithData_(data)
-                AppKit.NSCursor.alloc().initWithImage_hotSpot_(
-                    img, Foundation.NSMakePoint(16, 16)
-                ).set()
-            except Exception:
-                pass
+                AppKit.NSCursor.alloc().initWithImage_hotSpot_(img, Foundation.NSMakePoint(16, 16)).set()
+            except Exception: pass
 
     def _restore_cocoa_cursor(self) -> None:
         if sys.platform == "darwin":
             try:
                 import AppKit
-                arrow = AppKit.NSCursor.arrowCursor()
-                if arrow:
-                    arrow.set()
-            except Exception:
-                pass
+                if AppKit.NSCursor.arrowCursor(): AppKit.NSCursor.arrowCursor().set()
+            except Exception: pass
 
     def set_mode(self, new_mode: str) -> None:
         self.mode = new_mode
@@ -135,16 +114,13 @@ class OverlayWindow(QWidget):
             self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
             self._set_native_click_through(False)
             if new_mode == MODE_ERASER:
-                QApplication.setOverrideCursor(Qt.CursorShape.CrossCursor)
-                self.setCursor(Qt.CursorShape.CrossCursor)
+                QApplication.setOverrideCursor(Qt.CursorShape.BlankCursor)
+                self.setCursor(Qt.CursorShape.BlankCursor)
             else:
-                color = self.config_mgr.get("drawing", "active_color", "#00FF87")
-                qcur, pix = self._create_neon_cursor(color)
-                QApplication.setOverrideCursor(qcur)
-                self.setCursor(qcur)
-                self._apply_cocoa_cursor(pix)
-            self.raise_()
-            self.activateWindow()
+                c = self.config_mgr.get("drawing", "active_color", "#00FF87")
+                qcur, pix = self._create_neon_cursor(c)
+                QApplication.setOverrideCursor(qcur); self.setCursor(qcur); self._apply_cocoa_cursor(pix)
+            self.raise_(); self.activateWindow()
         self.update()
 
     def toggle_mode(self, target_mode: str) -> None:
@@ -152,16 +128,12 @@ class OverlayWindow(QWidget):
 
     def undo(self) -> None:
         if self.permanent_strokes:
-            self.undo_stack.append(self.permanent_strokes.pop())
-            self.update()
+            self.undo_stack.append(self.permanent_strokes.pop()); self.update()
         elif self.fade_manager.remove_last():
             self.update()
 
     def clear_all(self) -> None:
-        self.permanent_strokes.clear()
-        self.undo_stack.clear()
-        self.fade_manager.clear()
-        self.update()
+        self.permanent_strokes.clear(); self.undo_stack.clear(); self.fade_manager.clear(); self.update()
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
@@ -186,42 +158,45 @@ class OverlayWindow(QWidget):
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton and self.current_points:
-            color = self.config_mgr.get("drawing", "active_color", "#00FF87")
+            c = self.config_mgr.get("drawing", "active_color", "#00FF87")
             w = int(self.config_mgr.get("drawing", "stroke_width", 4))
             glow = bool(self.config_mgr.get("drawing", "neon_glow", True))
             g_int = float(self.config_mgr.get("drawing", "neon_intensity", 0.75))
-            shape_def = None
-            if self.config_mgr.get("drawing", "shape_recognition", True):
-                shape_def = self.recognizer.recognize(self.current_points)
+            shape = self.recognizer.recognize(self.current_points) if self.config_mgr.get("drawing", "shape_recognition", True) else None
+            st = {"points": list(self.current_points), "shape": shape, "color": c, "width": w, "glow": glow, "glow_intensity": g_int}
 
-            stroke = {
-                "points": list(self.current_points), "shape": shape_def,
-                "color": color, "width": w, "glow": glow, "glow_intensity": g_int
-            }
             if self.mode == MODE_DRAW_FIXED:
-                self.permanent_strokes.append(stroke)
+                self.permanent_strokes.append(st)
             elif self.mode == MODE_DRAW_VANISHING:
-                dur = float(self.config_mgr.get("drawing", "vanishing_duration", 2.0))
-                spd = float(self.config_mgr.get("drawing", "fadeout_speed", 0.6))
-                self.fade_manager.add_stroke(stroke, duration=dur, fade_duration=spd)
+                self.fade_manager.add_stroke(st, float(self.config_mgr.get("drawing", "vanishing_duration", 2.0)), float(self.config_mgr.get("drawing", "fadeout_speed", 0.6)))
+            self.current_points = []; self.update(); event.accept()
 
-            self.current_points = []
-            self.update()
-            event.accept()
-
-    def _erase_at(self, x: float, y: float, radius: float = 20.0) -> None:
-        survived = [
-            s for s in self.permanent_strokes
-            if not any((px - x)**2 + (py - y)**2 <= radius**2 for px, py in s.get("points", []))
-        ]
-        if len(survived) != len(self.permanent_strokes):
-            self.permanent_strokes = survived
-            self.update()
+    def _erase_at(self, x: float, y: float, radius: Optional[float] = None) -> None:
+        r = radius if radius is not None else float(self.config_mgr.get("drawing", "eraser_width", 24)) / 2.0
+        r2, new_st, changed = r * r, [], False
+        for s in self.permanent_strokes:
+            segs, cur, hit = [], [], False
+            for px, py in s.get("points", []):
+                if (px - x) ** 2 + (py - y) ** 2 > r2:
+                    cur.append((px, py))
+                else:
+                    hit = True
+                    if cur: segs.append(cur); cur = []
+            if cur: segs.append(cur)
+            if not hit:
+                new_st.append(s)
+            else:
+                changed = True
+                for seg in segs:
+                    if len(seg) >= 1:
+                        ns = dict(s); ns["points"], ns["shape"] = seg, None
+                        new_st.append(ns)
+        if changed:
+            self.permanent_strokes = new_st; self.update()
 
     def paintEvent(self, event: QPaintEvent) -> None:
         p = QPainter(self)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing, True)
-        p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing, True); p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
         if self.mode != MODE_CLICK_THROUGH:
             p.fillRect(self.rect(), QColor(0, 0, 0, 1))
 
@@ -231,19 +206,17 @@ class OverlayWindow(QWidget):
             self._render_single_stroke(p, vs.data, alpha=vs.alpha_factor)
         if self.current_points:
             path = NeonRenderer.create_smooth_path(self.current_points)
-            c = self.config_mgr.get("drawing", "active_color", "#00FF87")
-            w = int(self.config_mgr.get("drawing", "stroke_width", 4))
-            glow = bool(self.config_mgr.get("drawing", "neon_glow", True))
-            NeonRenderer.draw_neon_stroke(p, path, c, w, alpha_factor=1.0, enable_glow=glow)
-        if self.mode in (MODE_DRAW_FIXED, MODE_DRAW_VANISHING) and self.cursor_pos:
-            c = self.config_mgr.get("drawing", "active_color", "#00FF87")
-            NeonRenderer.draw_neon_cursor_dot(p, self.cursor_pos, c, radius=6.0)
+            NeonRenderer.draw_neon_stroke(p, path, self.config_mgr.get("drawing", "active_color", "#00FF87"), int(self.config_mgr.get("drawing", "stroke_width", 4)), 1.0, bool(self.config_mgr.get("drawing", "neon_glow", True)))
+
+        if self.mode == MODE_ERASER and self.cursor_pos:
+            NeonRenderer.draw_eraser_cursor(p, self.cursor_pos, float(self.config_mgr.get("drawing", "eraser_width", 24)) / 2.0)
+        elif self.mode in (MODE_DRAW_FIXED, MODE_DRAW_VANISHING) and self.cursor_pos:
+            NeonRenderer.draw_neon_cursor_dot(p, self.cursor_pos, self.config_mgr.get("drawing", "active_color", "#00FF87"), radius=6.0)
 
     def _render_single_stroke(self, p: QPainter, s: dict, alpha: float) -> None:
-        c, w, glow = s.get("color", "#00FF87"), s.get("width", 4), s.get("glow", True)
-        shape_def = s.get("shape")
-        if shape_def:
-            NeonRenderer.draw_shape(p, shape_def, c, w, alpha_factor=alpha, enable_glow=glow)
+        c, w, glow, shape = s.get("color", "#00FF87"), s.get("width", 4), s.get("glow", True), s.get("shape")
+        if shape:
+            NeonRenderer.draw_shape(p, shape, c, w, alpha_factor=alpha, enable_glow=glow)
         else:
             path = NeonRenderer.create_smooth_path(s.get("points", []))
             NeonRenderer.draw_neon_stroke(p, path, c, w, alpha_factor=alpha, enable_glow=glow)

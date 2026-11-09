@@ -1,5 +1,18 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Gomme Découpeuse Vectorielle, Curseur Guide & Palettes Circulaires (Néon & Or/Brillance)
+- **Action :** 
+  - **Gomme Découpeuse Point-par-Point (Direction Libre à la Souris) :** Fin de la suppression globale des traits entiers. Implémentation du découpage vectoriel dynamique (`_erase_at`) qui ne retire que les portions de tracés touchées par le passage de la souris et conserve les sous-segments intacts.
+  - **Réglage d'Épaisseur de la Gomme & Curseur Circulaire Guide :** Ajout d'un slider dédié dans le Dashboard (de $6\text{ px}$ à $70\text{ px}$, défaut $24\text{ px}$) et rendu en temps réel d'un anneau de visée circulaire en pointillés rouge/blanc (`draw_eraser_cursor`) suivant précisément la souris.
+  - **Double Palette en Pastilles Circulaires (Ronds) :**
+    - *Cercle 1 (Néon Vives) :* 9 pastilles rondes ($36\text{ px}$) avec vert néon, vert Phoenix, cyan, bleu royal, corail, rose fluo, jaune électrique, violet solaire, blanc pur.
+    - *Cercle 2 (Brillance, Or Solaire & Paillettes Métalliques) :* 9 pastilles rondes cerclées d'or avec or solaire brillant, bronze, ambre pailleté, argent métallique, platine, bleu céleste, or rose, cuivre, émeraude.
+  - **Moteur Graphique Spéculaire Métallique :** Ajout automatique d'un cœur étincelant et nacré (`sparkle_pen`) lors du tracé avec les teintes or, argent et paillettes.
+  - **Consolidation Formes & Undo :** Validation renforcée de la reconnaissance des formes fermées (ovale/ellipse, cercle, rectangle, carré, flèche, ligne droite) et de la pile d'annulation (`Cmd+Z`).
+- **Raison / Contexte :** Demande explicite d'Abdoulaye de contrôler la gomme comme un véritable outil de précision sans tout effacer d'un coup, et de transformer la palette du Dashboard en pastilles rondes intégrant des teintes dorées, argentées et pailletées.
+- **Impact & Validation :** Tests unitaires et d'intégration 100% verts, découpage vectoriel fluide, rendu étincelant validé.
+
+
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Correctif Majeur : Capture Réelle Tracé Souris, Swallowing Raccourcis & Mode Ghost Zéro Dashboard
 - **Action :** 
   - **Capture Réelle du Tracé Souris (Résolution Multi-Écrans macOS Spaces) :** Remplacement de `virtualGeometry()` (qui étendait artificiellement une fenêtre unique sur deux écrans `3648x1117px` et provoquait le blocage des clics par macOS WindowServer) par un dimensionnement dynamique sur l'écran physique actif (`screen.geometry()`). Ajout d'une surface d'interception invisible (`alpha=1/255`) garantissant 100% de capture des clics et glissers souris sans fuite vers VS Code ou Safari.

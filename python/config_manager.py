@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, List
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "hotkeys": {
-        "draw_fixed": "<alt>+d",
+        "draw_fixed": "<cmd>+d",
         "draw_vanishing": "<alt>+v",
         "eraser": "<alt>+e",
         "clear_all": "<alt>+c",
@@ -19,6 +19,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     },
     "drawing": {
         "stroke_width": 4,
+        "eraser_width": 24,
         "active_color": "#00FF87",
         "neon_glow": True,
         "neon_intensity": 0.75,
@@ -29,20 +30,23 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "cursor_dot": True,
         "cursor_dot_size": 10
     },
+    "palette_essential": [
+        "#00FF87", "#00A859", "#00E5FF", "#2979FF",
+        "#FF3D00", "#FF1493", "#FFEA00", "#A855F7", "#FFFFFF"
+    ],
+    "palette_metallic": [
+        "#FFD700", "#E5A93C", "#C59B27", "#E2E8F0",
+        "#CBD5E1", "#38BDF8", "#F472B6", "#FB923C", "#10B981"
+    ],
     "palette": [
-        "#00FF87",
-        "#00A859",
-        "#9B6E28",
-        "#00E5FF",
-        "#2979FF",
-        "#E0E0E0",
-        "#FF1493",
-        "#FFEA00",
-        "#FF3D00"
+        "#00FF87", "#00A859", "#9B6E28", "#00E5FF",
+        "#2979FF", "#E0E0E0", "#FF1493", "#FFEA00", "#FF3D00"
     ],
     "system": {
         "start_at_login": False,
-        "fps_limit": 60
+        "fps_limit": 60,
+        "floating_hud": True,
+        "open_dashboard_at_start": False
     }
 }
 
@@ -74,7 +78,6 @@ class ConfigManager:
             except Exception as e:
                 print(f"[ConfigManager] Error reading config: {e}. Falling back to default.")
 
-        # If missing or broken, copy defaults
         self.config = json.loads(json.dumps(DEFAULT_CONFIG))
         self.save()
         return self.config
