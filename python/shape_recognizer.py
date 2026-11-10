@@ -34,19 +34,10 @@ class ShapeRecognizer:
         # 2. Test for Closed Shapes (Circle, Ellipse, Rectangle, Square)
         p_start, p_end = points[0], points[-1]
         closure_dist = math.hypot(p_end[0] - p_start[0], p_end[1] - p_start[1])
-        if closure_dist / total_arc_len < 0.28:
-            # Test Circle first (CV is distinctively low < 0.06)
-            circle_res = self._test_circle(points, total_arc_len)
-            if circle_res:
-                return circle_res
-
-            rect_res = self._test_rectangle(points, total_arc_len)
-            if rect_res:
-                return rect_res
-
-            ellipse_res = self._test_ellipse(points)
-            if ellipse_res:
-                return ellipse_res
+        if closure_dist / total_arc_len < 0.32:
+            closed_res = self._test_closed_shape(points, total_arc_len)
+            if closed_res:
+                return closed_res
 
         return None
 
@@ -92,11 +83,49 @@ class ShapeRecognizer:
                     }
         return None
 
-    @staticmethod
-    def discretize_shape(shape_def: Dict[str, Any]) -> List[Point]:
-        """Samples mathematical points along snapped shape so erasing preserves perfect geometry."""
-        stype = shape_def.get("type")
+    def _test_closed_shape(self, points: List[Point], total_arc: float) -> Optional[Dict[str, Any]]:
+        xs = [p[0] for p in points]; ys = [p[1] for p in points]
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+        w, h = max_x - min_x, max_y - min_y
+        if w < 16 or h < 16:
+            return None
+
+        diag = math.hypot(w, h)
+        rx, ry = w / 2.0, h / 2.0
+        cx, cy = min_x + rx, min_y + ry
+        aspect = min(w, h) / max(w, h)
+
+        # 1. Elliptical / Circular radial error test
+        rad_errors = [abs(math.hypot((p[0] - cx) / rx, (p[1] - cy) / ry) - 1.0) for p in points]
+        avg_rad_err = sum(rad_errors) / len(rad_errors)
+
+        if avg_rad_err < 0.12:
+            if aspect >= 0.75:
+                return {"type": "circle", "center": (cx, cy), "radius": (w + h) / 4.0, "confidence": 1.0 - avg_rad_err}
+            else:
+                return {"type": "ellipse", "rect": (min_x, min_y, w, h), "center": (cx, cy), "radii": (rx, ry), "confidence": 1.0 - avg_rad_err}
+
+        # 2. Rectangular / Square boundary and corner-coverage test
+        dists_to_box = [min(abs(px - min_x), abs(px - max_x), abs(py - min_y), abs(py - max_y)) for px, py in points]
+        norm_dev = (sum(dists_to_box) / len(dists_to_box)) / diag
+
+        corners = [(min_x, min_y), (max_x, min_y), (max_x, max_y), (min_x, max_y)]
+        worst_corner_dist = max(min(math.hypot(p[0] - c[0], p[1] - c[1]) for p in points) for c in corners) / diag
+
+        if norm_dev < 0.12 and worst_corner_dist < 0.22:
+            stype = "square" if aspect >= 0.82 else "rectangle"
+            return {"type": stype, "rect": (min_x, min_y, w, h), "confidence": 1.0 - norm_dev}
+
+        return None
+
+    def discretize_shape(self, shape_def: Optional[Dict[str, Any]]) -> List[Point]:
+        """Discretizes geometric shapes into fine-grained points for eraser vector slicing."""
+        if not shape_def:
+            return []
         pts: List[Point] = []
+        stype = shape_def.get("type")
+
         if stype in ("rectangle", "square"):
             x, y, w, h = shape_def["rect"]
             step, cx, cy = 5.0, x, y
@@ -127,95 +156,3 @@ class ShapeRecognizer:
                 pts.append((cx + rx * math.cos(rad), cy + ry * math.sin(rad)))
             pts.append(pts[0])
         return pts
-
-    def _test_circle(self, points: List[Point], total_arc: float) -> Optional[Dict[str, Any]]:
-        xs = [p[0] for p in points]
-        ys = [p[1] for p in points]
-        cx = sum(xs) / len(xs)
-        cy = sum(ys) / len(ys)
-
-        dists = [math.hypot(p[0] - cx, p[1] - cy) for p in points]
-        avg_r = sum(dists) / len(dists)
-        if avg_r < 12.0:
-            return None
-
-        variance = sum((d - avg_r) ** 2 for d in dists) / len(dists)
-        std_dev = math.sqrt(variance)
-        cv = std_dev / avg_r
-
-        # Circle test: allow natural mouse hand wobble (cv <= 0.11)
-        if cv <= 0.11:
-            expected_perim = 2.0 * math.pi * avg_r
-            if abs(total_arc - expected_perim) / expected_perim < 0.20:
-                return {
-                    "type": "circle",
-                    "center": (cx, cy),
-                    "radius": avg_r,
-                    "confidence": 1.0 - cv
-                }
-        return None
-
-    def _test_ellipse(self, points: List[Point]) -> Optional[Dict[str, Any]]:
-        xs = [p[0] for p in points]
-        ys = [p[1] for p in points]
-        min_x, max_x = min(xs), max(xs)
-        min_y, max_y = min(ys), max(ys)
-        w = max_x - min_x
-        h = max_y - min_y
-        if w < 20 or h < 20:
-            return None
-
-        rx, ry = w / 2.0, h / 2.0
-        cx, cy = min_x + rx, min_y + ry
-
-        # Normalized radial error to ellipse formula: (x/rx)^2 + (y/ry)^2 = 1
-        errors = [abs(math.hypot((p[0] - cx) / rx, (p[1] - cy) / ry) - 1.0) for p in points]
-        avg_err = sum(errors) / len(errors)
-
-        if avg_err <= (1.0 - self.threshold * 0.92):  # avg_err <= ~0.16
-            return {
-                "type": "ellipse",
-                "rect": (min_x, min_y, w, h),
-                "center": (cx, cy),
-                "radii": (rx, ry),
-                "confidence": 1.0 - avg_err
-            }
-        return None
-
-    def _test_rectangle(self, points: List[Point], total_arc: float) -> Optional[Dict[str, Any]]:
-        xs = [p[0] for p in points]
-        ys = [p[1] for p in points]
-        min_x, max_x = min(xs), max(xs)
-        min_y, max_y = min(ys), max(ys)
-        w, h = max_x - min_x, max_y - min_y
-        if w < 20 or h < 20:
-            return None
-
-        # Perimeter of bounding box: rectangle points travel along sides, error < 22%
-        bbox_perim = 2.0 * (w + h)
-        perim_ratio = abs(total_arc - bbox_perim) / bbox_perim
-
-        if perim_ratio > 0.22:
-            return None
-
-        # Check how close points are to the 4 sides of the bounding box
-        dists_to_box = []
-        for px, py in points:
-            d_left = abs(px - min_x)
-            d_right = abs(px - max_x)
-            d_top = abs(py - min_y)
-            d_bottom = abs(py - max_y)
-            dists_to_box.append(min(d_left, d_right, d_top, d_bottom))
-
-        mean_dist = sum(dists_to_box) / len(dists_to_box)
-        diag = math.hypot(w, h)
-        norm_dev = mean_dist / diag
-
-        if norm_dev < (1.0 - self.threshold * 0.82):  # norm_dev < ~0.28
-            shape_type = "square" if abs(w - h) / max(w, h) < 0.18 else "rectangle"
-            return {
-                "type": shape_type,
-                "rect": (min_x, min_y, w, h),
-                "confidence": 1.0 - norm_dev
-            }
-        return None

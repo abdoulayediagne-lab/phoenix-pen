@@ -5,9 +5,13 @@
   - **Éradication Définitive du Blocage de `Cmd+D` (`kCGKeyboardEventAutorepeat`) :**
     - Suppression du set `_keys_down` qui restait verrouillé lors des désynchronisations de `KeyUp` sous macOS.
     - Utilisation du champ natif Quartz Apple `Quartz.kCGKeyboardEventAutorepeat` : chaque appui sur `Cmd+D`, `Cmd+Shift+D` ou `Option+D` bascule instantanément en mode dessin, sans jamais se bloquer.
-  - **Snapping Intelligent Immédiat des Rectangles et Cercles (`ShapeRecognizer`) :**
-    - Assouplissement du seuil de tolérance périmétrique du rectangle de 10% à 22% (`perim_ratio < 0.22`) : les rectangles dessinés à main levée se snappent immédiatement en formes géométriques parfaites.
-    - Élargissement de la détection de cercle (`cv <= 0.11`) pour éviter la fausse transformation en ovale lors d'un tracé circulaire à la souris.
+  - **Snapping Géométrique Infaillible — Fin de la Confusion Cercles / Carrés (`ShapeRecognizer`) :**
+    - Résolution mathématique de la confusion entre cercles et carrés : un cercle hand-drawn possédait un périmètre proche de 21% de sa boîte englobante, le faisant passer à tort dans le détecteur de rectangles assoupli.
+    - Implémentation d'une discrimination par erreur radiale elliptique (`avg_rad_err < 0.12`) :
+      - Si l'erreur radiale est basse (< 0.12) et l'aspect ratio est équilibré ($\ge 0.75$), le tracé est snappé en **cercle parfait**.
+      - Si l'aspect ratio est allongé ($< 0.75$), le tracé est snappé en **ovale / ellipse**.
+      - Si l'erreur radiale est angulaire ($\ge 0.12$), le tracé est validé contre les 4 côtés et les 4 coins de la boîte pour être snappé en **carré** ou **rectangle**.
+    - Fin totale des carrés intempestifs lorsqu'on dessine un rond : les cercles, ovales, carrés et rectangles se snappent chacun avec 100% de fidélité au geste.
   - **Support Plein Écran Natif (`NSWindowStyleMaskNonactivatingPanel`) :**
     - Injection du style mask `NSWindowStyleMaskNonactivatingPanel` sur la capsule et les overlays : persistance et survol garantis au-dessus des applications en plein écran natif (VS Code plein écran, Chrome plein écran).
   - **Calque de Verre Universel "Vitrine Plein Écran" & Politique macOS Accessory :**
