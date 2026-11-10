@@ -23,6 +23,14 @@ class PhoenixPenApp:
     """Core controller connecting all subsystems across all physical screens."""
 
     def __init__(self, open_dashboard_on_start: bool = False) -> None:
+        if sys.platform == "darwin":
+            try:
+                import AppKit
+                AppKit.NSApplication.sharedApplication().setActivationPolicy_(
+                    AppKit.NSApplicationActivationPolicyAccessory
+                )
+            except Exception: pass
+
         self.app = QApplication.instance() or QApplication(sys.argv)
         self.app.setQuitOnLastWindowClosed(False)
 
@@ -109,9 +117,13 @@ class PhoenixPenApp:
 
         cur_mode = self.overlays[0].mode if self.overlays else MODE_CLICK_THROUGH
         new_mode = MODE_CLICK_THROUGH if cur_mode == target_mode else target_mode
+        cur_screen = QGuiApplication.screenAt(QCursor.pos()) or QGuiApplication.primaryScreen()
 
         for ov in self.overlays:
             ov.set_mode(new_mode)
+            if new_mode != MODE_CLICK_THROUGH and ov.target_screen == cur_screen:
+                ov.focus_active()
+
         self.hud.set_active_mode(new_mode)
 
         if self.config_mgr.get("system", "floating_hud", True):

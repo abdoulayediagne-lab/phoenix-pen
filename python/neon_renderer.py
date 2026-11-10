@@ -1,6 +1,6 @@
 """
 Neon Glow Renderer for Phoenix Pen.
-Renders smooth antialiased strokes with vivid neon glow layers, metallic highlights, and custom cursors.
+Renders ultra-smooth Catmull-Rom cubic Bézier strokes, snapped geometry, and high-DPI cursors.
 Atlas Standard: < 250 lines.
 """
 
@@ -16,57 +16,67 @@ METALLIC_SHADES = {
 
 
 def is_metallic_color(color_hex: str) -> bool:
-    """Detects whether a color is metallic (gold, bronze, silver, copper, etc.)."""
+    """Detects whether a color is metallic (gold, bronze, silver, copper, titanium)."""
     if not color_hex:
         return False
-    u = color_hex.upper()
-    if u in METALLIC_SHADES:
+    if color_hex.upper() in METALLIC_SHADES:
         return True
     qc = QColor(color_hex)
     if not qc.isValid():
         return False
-    h = qc.hsvHue()
-    s = qc.hsvSaturationF()
-    v = qc.valueF()
-    # Gold & Bronze
+    h, s, v = qc.hsvHue(), qc.hsvSaturationF(), qc.valueF()
     if 25 <= h <= 65 and v >= 0.55:
         return True
-    # Silver & Chrome (low saturation, high brightness)
     if s <= 0.28 and v >= 0.70:
         return True
-    # Rose Gold & Copper
     if (h >= 340 or h <= 25) and 0.15 <= s <= 0.65 and v >= 0.65:
         return True
-    # Titanium Blue
     if 190 <= h <= 215 and 0.20 <= s <= 0.85 and v >= 0.75:
         return True
     return False
 
 
 class NeonRenderer:
-    """Provides high-performance neon glow drawing utilities for QPainter."""
+    """Provides high-performance, ultra-smooth curve drawing utilities for QPainter."""
 
     @staticmethod
     def create_smooth_path(points: List[Point]) -> QPainterPath:
+        """Transforms raw input points into continuous C1 cubic Bézier splines (Catmull-Rom)."""
         path = QPainterPath()
         if not points:
             return path
 
-        path.moveTo(QPointF(points[0][0], points[0][1]))
-        if len(points) == 1:
-            path.addEllipse(QPointF(points[0][0], points[0][1]), 1.5, 1.5)
+        # 1. Distance filter: eliminate micro-jitter (< 1.5px distance)
+        filtered: List[Point] = [points[0]]
+        for p in points[1:]:
+            dx, dy = p[0] - filtered[-1][0], p[1] - filtered[-1][1]
+            if dx * dx + dy * dy >= 2.25:
+                filtered.append(p)
+        if len(filtered) < len(points) and points[-1] != filtered[-1]:
+            filtered.append(points[-1])
+
+        n = len(filtered)
+        if n == 1:
+            path.addEllipse(QPointF(filtered[0][0], filtered[0][1]), 1.5, 1.5)
             return path
-        if len(points) == 2:
-            path.lineTo(QPointF(points[1][0], points[1][1]))
+        if n == 2:
+            path.moveTo(QPointF(filtered[0][0], filtered[0][1]))
+            path.lineTo(QPointF(filtered[1][0], filtered[1][1]))
             return path
 
-        for i in range(1, len(points) - 1):
-            p0, p1 = points[i], points[i + 1]
-            mid_x = (p0[0] + p1[0]) / 2.0
-            mid_y = (p0[1] + p1[1]) / 2.0
-            path.quadTo(QPointF(p0[0], p0[1]), QPointF(mid_x, mid_y))
+        # 2. Catmull-Rom to Cubic Bézier conversion
+        path.moveTo(QPointF(filtered[0][0], filtered[0][1]))
+        for i in range(n - 1):
+            p0 = filtered[max(i - 1, 0)]
+            p1 = filtered[i]
+            p2 = filtered[i + 1]
+            p3 = filtered[min(i + 2, n - 1)]
 
-        path.lineTo(QPointF(points[-1][0], points[-1][1]))
+            cp1_x = p1[0] + (p2[0] - p0[0]) / 6.0
+            cp1_y = p1[1] + (p2[1] - p0[1]) / 6.0
+            cp2_x = p2[0] - (p3[0] - p1[0]) / 6.0
+            cp2_y = p2[1] - (p3[1] - p1[1]) / 6.0
+            path.cubicTo(QPointF(cp1_x, cp1_y), QPointF(cp2_x, cp2_y), QPointF(p2[0], p2[1]))
         return path
 
     @staticmethod
@@ -76,14 +86,19 @@ class NeonRenderer:
         color_hex: str,
         width: int,
         alpha_factor: float = 1.0,
-        enable_glow: bool = True,
+        enable_glow: bool = False,
         glow_intensity: float = 0.75
     ) -> None:
-        """Renders path with pure vivid stroke in user color and subtle aura (no white core, no dark fringe)."""
+        """Renders pure, crisp, solid strokes in user's color with antialiased round caps."""
         painter.setBrush(Qt.BrushStyle.NoBrush)
         base_color = QColor(color_hex) if QColor(color_hex).isValid() else QColor("#00FF87")
 
-        # Pure solid crisp stroke in user exact chosen color (zero outer fringe, zero dark contour)
+        if enable_glow and width >= 4:
+            glow_col = QColor(base_color)
+            glow_col.setAlpha(max(0, min(255, int(50 * glow_intensity * alpha_factor))))
+            painter.setPen(QPen(glow_col, width + 4.0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+            painter.drawPath(path)
+
         core_color = QColor(base_color)
         core_color.setAlpha(max(0, min(255, int(255 * alpha_factor))))
         painter.setPen(QPen(core_color, width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
@@ -96,35 +111,26 @@ class NeonRenderer:
         color_hex: str,
         width: int,
         alpha_factor: float = 1.0,
-        enable_glow: bool = True
+        enable_glow: bool = False
     ) -> None:
-        """Draws recognized geometric shapes (lines, arrows, rectangles, circles, ovals)."""
+        """Renders snapped geometric shapes (lines, arrows, rectangles, circles, ovals)."""
         shape_type = shape_def.get("type")
         path = QPainterPath()
 
         if shape_type == "line":
             s, e = shape_def["start"], shape_def["end"]
-            path.moveTo(s[0], s[1])
-            path.lineTo(e[0], e[1])
-
+            path.moveTo(s[0], s[1]); path.lineTo(e[0], e[1])
         elif shape_type == "arrow":
             s, e = shape_def["start"], shape_def["end"]
             hl, hr = shape_def["head_left"], shape_def["head_right"]
-            path.moveTo(s[0], s[1])
-            path.lineTo(e[0], e[1])
-            path.moveTo(hl[0], hl[1])
-            path.lineTo(e[0], e[1])
-            path.lineTo(hr[0], hr[1])
-
+            path.moveTo(s[0], s[1]); path.lineTo(e[0], e[1])
+            path.moveTo(hl[0], hl[1]); path.lineTo(e[0], e[1]); path.lineTo(hr[0], hr[1])
         elif shape_type in ("rectangle", "square"):
             x, y, w, h = shape_def["rect"]
             path.addRoundedRect(QRectF(x, y, w, h), 4.0, 4.0)
-
         elif shape_type == "circle":
-            cx, cy = shape_def["center"]
-            r = shape_def["radius"]
+            cx, cy, r = shape_def["center"][0], shape_def["center"][1], shape_def["radius"]
             path.addEllipse(QPointF(cx, cy), r, r)
-
         elif shape_type == "ellipse":
             x, y, w, h = shape_def["rect"]
             path.addEllipse(QRectF(x, y, w, h))
@@ -132,16 +138,15 @@ class NeonRenderer:
         NeonRenderer.draw_neon_stroke(painter, path, color_hex, width, alpha_factor, enable_glow)
 
     @staticmethod
-    def draw_neon_cursor_dot(painter: QPainter, pos: QPointF, color_hex: str, radius: float = 6.0) -> None:
+    def draw_neon_cursor_dot(painter: QPainter, pos: QPointF, color_hex: str, radius: float = 5.0) -> None:
         """Draws glowing cursor dot at current mouse position."""
         base_color = QColor(color_hex) if QColor(color_hex).isValid() else QColor("#00FF87")
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        glow_color = QColor(base_color)
-        glow_color.setAlpha(90)
-        painter.setPen(QPen(glow_color, 4.0))
-        painter.drawEllipse(pos, radius + 4.0, radius + 4.0)
-        painter.setPen(QPen(base_color, 2.0))
-        painter.setBrush(QBrush(QColor(255, 255, 255, 240)))
+        glow_color = QColor(base_color); glow_color.setAlpha(90)
+        painter.setPen(QPen(glow_color, 3.0))
+        painter.drawEllipse(pos, radius + 3.0, radius + 3.0)
+        painter.setPen(QPen(base_color, 1.5))
+        painter.setBrush(QBrush(QColor(255, 255, 255, 245)))
         painter.drawEllipse(pos, radius, radius)
 
     @staticmethod

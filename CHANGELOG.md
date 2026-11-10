@@ -1,5 +1,23 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Calque Universel "Vitrine de Verre", Mode Accessory macOS, Splines Catmull-Rom Bézier & Découpe Gomme Totale
+- **Action :** 
+  - **Calque de Verre Universel "Vitrine Plein Écran" & Politique macOS Accessory (`NSApplicationActivationPolicyAccessory`) :**
+    - Définition de la politique d'application en tant qu'accessoire système natif (`NSApplicationActivationPolicyAccessory`). Phoenix Pen n'apparaît pas dans le Dock et ne déclenche aucune transition de bureau intempestive sous Mission Control lors de l'activation.
+    - Ajout des attributs Cocoa `NSWindowCollectionBehaviorStationary | NSWindowCollectionBehaviorIgnoresCycle`, `setFloatingPanel_(True)`, `setBecomesKeyOnlyIfNeeded_(False)` et `setWorksWhenModal_(True)` sur tous les overlays et la capsule.
+    - L'overlay agit comme une véritable vitrine de verre posée par-dessus l'écran : dès l'activation (`Cmd+D` ou clic sur `[ 🖋️ Fixe ]`), l'overlay devient premier plan actif (`focus_active`) sur l'écran où se trouve le curseur, interceptant 100% des clics et gestes de dessin sans laisser fuiter aucun clic vers les applications sous-jacentes (Aperçu, VS Code, Chrome).
+  - **Moteur de Tracé Spline Catmull-Rom vers Bézier Cubique ($C^1$ Continuity) :**
+    - Remplacement de l'interpolation quadratique par une conversion Catmull-Rom vers courbes de Bézier cubiques (`cubicTo`).
+    - Filtre anti-saccades éliminant les micro-points parasites (< 1.5 px) : les tracés possèdent une fluidité et une élégance comparables à Apple Freeform et Epic Pen.
+    - Rendu antialiasing avec terminaisons et jointures arrondies (`RoundCap` et `RoundJoin`) en teinte vive pure sans aucun liseré sombre.
+  - **Gomme Vectorielle Universelle (Tracés & Formes Snappées) :**
+    - Découpe vectorielle chirurgicale et effacement immédiat au passage de la souris sur toutes les formes géométriques (rectangles, cercles, ovales, lignes, flèches) ainsi que sur les tracés d'encre éphémère.
+  - **Raccourcis & Restauration Souris Instantanée :**
+    - La touche `Échap` (Esc) ou un nouveau clic/raccourci désactive immédiatement le mode dessin et rétablit le clic direct vers les applications sous-jacentes.
+    - `Cmd+Z` annule le dernier tracé sans impacter les documents ouverts.
+- **Raison / Contexte :** Retours et alignement stratégique de Pierre Chaddouk et Abdoulaye : disposer d'un layer vitrine universel étanche par-dessus toutes les fenêtres et espaces, et obtenir un trait fluide et moderne pour la démo.
+- **Impact & Validation :** Tests unitaires (`test_core.py`), simulations de flux (`test_full_flow.py`) et tests GUI (`test_gui.py`) 100% validés. Tous les modules Python respectent strictement la limite Atlas des 250 lignes.
+
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Migration QNSPanel de l'Overlay (Multi-Bureaux 100%), Fin des Clics Sauvages vers Aperçu
 - **Action :** 
   - **Conversion d'OverlayWindow en QNSPanel Natif (`Qt.WindowType.Tool`) :**

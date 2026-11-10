@@ -236,7 +236,7 @@ class ConfigWindow(QDialog):
             import AppKit, objc
             nswin = objc.objc_object(c_void_p=int(self.winId())).window()
             if nswin is not None:
-                nswin.setCollectionBehavior_(AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary)
+                nswin.setCollectionBehavior_(AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary | AppKit.NSWindowCollectionBehaviorStationary)
         except Exception: pass
 
     def _save_settings(self) -> None:

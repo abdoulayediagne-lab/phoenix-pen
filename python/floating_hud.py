@@ -100,10 +100,13 @@ class FloatingHUD(QFrame):
                     behavior = (
                         AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces
                         | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary
+                        | AppKit.NSWindowCollectionBehaviorStationary
+                        | AppKit.NSWindowCollectionBehaviorIgnoresCycle
                     )
                     nswin.setCollectionBehavior_(behavior)
-                    if hasattr(nswin, "setHidesOnDeactivate_"):
-                        nswin.setHidesOnDeactivate_(False)
+                    if hasattr(nswin, "setHidesOnDeactivate_"): nswin.setHidesOnDeactivate_(False)
+                    if hasattr(nswin, "setFloatingPanel_"): nswin.setFloatingPanel_(True)
+                    if hasattr(nswin, "setBecomesKeyOnlyIfNeeded_"): nswin.setBecomesKeyOnlyIfNeeded_(False)
                     nswin.setLevel_(AppKit.NSStatusWindowLevel)
                     nswin.orderFrontRegardless()
             except Exception as e:
