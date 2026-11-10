@@ -1,4 +1,4 @@
-# ⚡ Phoenix Pen — Annotation d'Écran Souveraine & Lumineuse
+# ⚡ Phoenix Pen : Annotation d'Écran Souveraine & Lumineuse
 
 Alternative souveraine, ultra-rapide et moderne à **Epic Pen**, conçue sur-mesure pour l'équipe **Phoenix Performance** (**Pierre, Mathis, Abdoulaye**).
 

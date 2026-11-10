@@ -105,3 +105,4 @@ def restart_app() -> None:
         os._exit(0)
     except Exception as e:
         print(f"[Updater] Erreur redémarrage: {e}")
+

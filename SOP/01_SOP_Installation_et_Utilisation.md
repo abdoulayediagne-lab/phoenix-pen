@@ -1,4 +1,4 @@
-# 📋 SOP 01 — Installation et Utilisation de Phoenix Pen
+# 📋 SOP 01 : Installation et Utilisation de Phoenix Pen
 
 ## 1. Objectif
 Guider l'installation, le paramétrage et l'utilisation quotidienne de **Phoenix Pen** sur macOS et Windows 11.

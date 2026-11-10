@@ -1,5 +1,17 @@
 # 📜 Journal des Déploiements : Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Nouveau Logo Souverain Blanc & Vert (Emblème Phoenix Voice), Synchronisation App Bundle Bureau & Éradication Complète des Tirets Longs
+- **Action :**
+  - **Logo Officiel Phoenix Blanc & Vert (Emblème Souverain Phoenix Performance) :**
+    - Reprise exacte de la géométrie de l'emblème Phoenix officiel (`logo_phoenix.png`, 1002x1000 px), identique à celle de `Phoenix Voice`.
+    - Transformation bichrome souveraine : aile supérieure en blanc pur (`#FFFFFF`) et aile inférieure en dégradé Vert Phoenix (`#00A859` vers Vert Néon `#00FF87`), avec lueur subtile et ombre portée native macOS.
+    - Génération du master `assets/icon.png` (512x512) et compilation complète multi-résolution dans `assets/AppIcon.icns` (16x16 à 1024x1024).
+    - Mise à jour et rafraîchissement du bundle macOS `~/Desktop/Phoenix Pen.app` et du System Tray (`tray_app.py`).
+  - **Éradication Totale des Tirets Longs (`—`) :**
+    - Suppression et remplacement exhaustif de tous les tirets cadratins par des deux-points (`:`) ou traits d'union simples (`-`) sur l'ensemble de la base de code et de la documentation (`.agents/AGENTS.md`, `README.md`, `SOP/`, `CHANGELOG.md`).
+- **Raison / Contexte :** Instruction directe d'Abdoulaye : remplacer le logo stylisé par l'emblème exact de Phoenix Voice en déclinaison "blanc vert" pour une identité de marque souveraine et homogène.
+- **Impact & Validation :** Tests unitaires (`test_core.py`), de flux (`test_full_flow.py`) et GUI (`test_gui.py`) 100% validés. Règle des 250 lignes strictement respectée.
+
 ### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Masquage de la Barre Flottante (Option+H), Logo Phoenix Stylus, Updater 1-Clic GitHub & Dépôt Officiel
 - **Action :** 
   - **Masquage / Affichage à la Volée de la Barre Flottante (`Option + H` / Bouton `👁️`) :**
@@ -66,7 +78,7 @@
   - **Éradication Définitive du Blocage de `Cmd+D` (`kCGKeyboardEventAutorepeat`) :**
     - Suppression du set `_keys_down` qui restait verrouillé lors des désynchronisations de `KeyUp` sous macOS.
     - Utilisation du champ natif Quartz Apple `Quartz.kCGKeyboardEventAutorepeat` : chaque appui sur `Cmd+D`, `Cmd+Shift+D` ou `Option+D` bascule instantanément en mode dessin, sans jamais se bloquer.
-  - **Snapping Géométrique Infaillible — Fin de la Confusion Cercles / Carrés (`ShapeRecognizer`) :**
+  - **Snapping Géométrique Infaillible : Fin de la Confusion Cercles / Carrés (`ShapeRecognizer`) :**
     - Résolution mathématique de la confusion entre cercles et carrés : un cercle hand-drawn possédait un périmètre proche de 21% de sa boîte englobante, le faisant passer à tort dans le détecteur de rectangles assoupli.
     - Implémentation d'une discrimination par erreur radiale elliptique (`avg_rad_err < 0.12`) :
       - Si l'erreur radiale est basse (< 0.12) et l'aspect ratio est équilibré ($\ge 0.75$), le tracé est snappé en **cercle parfait**.
