@@ -14,75 +14,31 @@ from PyQt6.QtWidgets import (
 )
 
 from color_wheel import MetallicWheelWidget, NeonHueWheelWidget
+from updater_gui import UpdaterCard
 
 
 class ConfigWindow(QDialog):
-    """Phoenix Performance branded dark configuration panel with dual interactive color wheels."""
+    """Phoenix Performance dark configuration panel with dual interactive color wheels."""
 
     def __init__(self, config_mgr: Any) -> None:
         super().__init__()
         self.config_mgr = config_mgr
-        self.setWindowTitle("⚡ Phoenix Pen — Configuration & Dashboard")
-        self.setFixedSize(580, 790)
+        self.setWindowTitle("⚡ Phoenix Pen : Configuration & Dashboard")
+        self.setFixedSize(580, 840)
         self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.WindowStaysOnTopHint)
         self.active_color = self.config_mgr.get("drawing", "active_color", "#00FF87")
         self.setStyleSheet("""
-            QDialog {
-                background-color: #0D0F12;
-                color: #FFFFFF;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            }
-            QGroupBox {
-                border: 1px solid #1F232B;
-                border-radius: 8px;
-                margin-top: 8px;
-                padding-top: 8px;
-                font-weight: bold;
-                color: #00FF87;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 12px;
-                padding: 0 4px;
-            }
+            QDialog { background-color: #0D0F12; color: #FFFFFF; font-family: -apple-system, sans-serif; }
+            QGroupBox { border: 1px solid #1F232B; border-radius: 8px; margin-top: 8px; padding-top: 8px; font-weight: bold; color: #00FF87; }
+            QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 4px; }
             QLabel { color: #D1D5DB; font-size: 13px; }
-            QSlider::groove:horizontal {
-                height: 6px;
-                background: #1F2937;
-                border-radius: 3px;
-            }
-            QSlider::handle:horizontal {
-                background: #00FF87;
-                width: 16px;
-                height: 16px;
-                margin: -5px 0;
-                border-radius: 8px;
-            }
-            QComboBox {
-                background-color: #1A231E;
-                color: #FFFFFF;
-                border: 1px solid #2D3E33;
-                border-radius: 6px;
-                padding: 4px 8px;
-                min-width: 170px;
-            }
+            QSlider::groove:horizontal { height: 6px; background: #1F2937; border-radius: 3px; }
+            QSlider::handle:horizontal { background: #00FF87; width: 16px; height: 16px; margin: -5px 0; border-radius: 8px; }
+            QComboBox { background-color: #1A231E; color: #FFFFFF; border: 1px solid #2D3E33; border-radius: 6px; padding: 4px 8px; min-width: 170px; }
             QCheckBox { color: #E5E7EB; spacing: 8px; font-size: 12px; }
-            QCheckBox::indicator {
-                width: 15px; height: 15px;
-                border: 1px solid #00A859;
-                border-radius: 4px;
-                background: #1A231E;
-            }
+            QCheckBox::indicator { width: 15px; height: 15px; border: 1px solid #00A859; border-radius: 4px; background: #1A231E; }
             QCheckBox::indicator:checked { background: #00FF87; }
-            QPushButton#saveBtn {
-                background-color: #00A859;
-                color: #0B0E0D;
-                font-weight: bold;
-                border-radius: 8px;
-                padding: 9px;
-                font-size: 14px;
-                border: none;
-            }
+            QPushButton#saveBtn { background-color: #00A859; color: #0B0E0D; font-weight: bold; border-radius: 8px; padding: 8px; font-size: 13px; border: none; }
             QPushButton#saveBtn:hover { background-color: #00FF87; }
         """)
         self._init_ui()
@@ -91,7 +47,7 @@ class ConfigWindow(QDialog):
         layout = QVBoxLayout(self)
         layout.setSpacing(8)
 
-        header = QLabel("⚡ Phoenix Pen — Tableau de Bord & Réglages")
+        header = QLabel("⚡ Phoenix Pen : Tableau de Bord & Réglages")
         header.setFont(QFont("Arial", 15, QFont.Weight.Bold))
         header.setStyleSheet("color: #00FF87; margin-bottom: 2px;")
         layout.addWidget(header)
@@ -196,10 +152,15 @@ class ConfigWindow(QDialog):
         kf.addRow("🖋️ Encre Fixe :", QLabel("<b>Cmd + D</b> ou <b>Option + D</b> (ou Cmd+Shift+D)"))
         kf.addRow("⏳ Encre Éphémère :", QLabel("<b>Cmd + Shift + V</b> ou <b>Option + V</b>"))
         kf.addRow("🧹 Gomme / Undo :", QLabel("<b>Option + E</b> (Gomme) | <b>Cmd + Z</b> (Annuler direct)"))
+        kf.addRow("👁️ Barre Flottante :", QLabel("<b>Option + H</b> (ou Cmd+Shift+H pour masquer/afficher)"))
         kf.addRow("⎋ Sortie :", QLabel("<b>Échap</b> pour reprendre la souris sans dessiner"))
         layout.addWidget(key_group)
 
-        # 4. Save Button
+        # 4. Section Mises à Jour en 1 clic
+        self.updater_card = UpdaterCard(self)
+        layout.addWidget(self.updater_card)
+
+        # 5. Save Button
         save_btn = QPushButton("💾 Enregistrer & Fermer")
         save_btn.setObjectName("saveBtn")
         save_btn.clicked.connect(self._save_settings)

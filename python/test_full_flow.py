@@ -60,6 +60,12 @@ def test_full_flow():
     assert len(overlay.permanent_strokes) == 0
     print("     ✓ Click [ 🗑️ Clear ] wipes canvas.")
 
+    hidden = []
+    hud.on_hide = lambda: hidden.append(True)
+    hud.btn_hide.click()
+    assert len(hidden) == 1
+    print("     ✓ Click [ 👁️ Hide ] triggers HUD hide callback.")
+
     # 2. Test Hotkeys Dispatcher
     print("  2. Testing Hotkey Dispatcher...")
     hotkeys = HotkeyManager(cfg)
@@ -69,6 +75,7 @@ def test_full_flow():
     hotkeys.sig_toggle_draw_vanishing.connect(lambda: signals_received.append("vanishing"))
     hotkeys.sig_toggle_eraser.connect(lambda: signals_received.append("eraser"))
     hotkeys.sig_undo.connect(lambda: signals_received.append("undo"))
+    hotkeys.sig_toggle_hud.connect(lambda: signals_received.append("hud"))
 
     # Simulate Cmd+Shift+D (d key vk=2)
     hotkeys.cmd_down = True
@@ -77,6 +84,11 @@ def test_full_flow():
     hotkeys._on_release(FakeKey(vk=2))
     assert "fixed" in signals_received, "Cmd+Shift+D failed!"
     print("     ✓ Cmd+Shift+D triggered fixed mode signal.")
+
+    # Simulate Option+H (h key vk=4)
+    hotkeys._on_press(FakeKey(vk=4, char='h'))
+    assert "hud" in signals_received, "Option+H / Cmd+Shift+H failed!"
+    print("     ✓ Option+H triggered HUD toggle signal.")
 
     # Simulate Cmd+D (d key vk=2)
     hotkeys.shift_down = False

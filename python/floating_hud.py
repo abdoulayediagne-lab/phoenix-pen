@@ -5,7 +5,7 @@ Atlas Standard: < 250 lines.
 """
 
 import sys
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 from PyQt6.QtCore import QPoint, Qt
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton
@@ -22,7 +22,8 @@ class FloatingHUD(QFrame):
         on_clear: Callable[[], None],
         on_undo: Callable[[], None],
         on_dashboard: Callable[[], None],
-        config_mgr: Any
+        config_mgr: Any,
+        on_hide: Optional[Callable[[], None]] = None
     ) -> None:
         super().__init__()
         self.config_mgr = config_mgr
@@ -35,6 +36,7 @@ class FloatingHUD(QFrame):
         self.on_clear = on_clear
         self.on_undo = on_undo
         self.on_dashboard = on_dashboard
+        self.on_hide = on_hide
 
         self._init_window()
         self._init_ui()
@@ -49,7 +51,7 @@ class FloatingHUD(QFrame):
         self.setWindowFlags(flags)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setFixedHeight(48)
-        self.setFixedWidth(560)
+        self.setFixedWidth(600)
         self.setStyleSheet("""
             FloatingHUD {
                 background-color: rgba(13, 15, 18, 245);
@@ -123,7 +125,7 @@ class FloatingHUD(QFrame):
 
         # Drag handle / Brand logo
         self.brand_lbl = QLabel("⚡")
-        self.brand_lbl.setToolTip("⚡ Phoenix Pen — Poignée de déplacement\n• Glissez pour déplacer la barre\n• Cliquez pour ouvrir le Dashboard")
+        self.brand_lbl.setToolTip("⚡ Phoenix Pen : Poignée de déplacement\n• Glissez pour déplacer la barre\n• Cliquez pour ouvrir le Dashboard")
         self.brand_lbl.setCursor(Qt.CursorShape.SizeAllCursor)
         self.brand_lbl.setStyleSheet("color: #00FF87; font-size: 15px; font-weight: bold; padding: 0 4px;")
         layout.addWidget(self.brand_lbl)
@@ -165,6 +167,12 @@ class FloatingHUD(QFrame):
         self.btn_dash.clicked.connect(self.on_dashboard)
         layout.addWidget(self.btn_dash)
 
+        # 7. Hide Button (Masquer la barre)
+        self.btn_hide = QPushButton("👁️")
+        self.btn_hide.setToolTip("Masquer la barre (Option+H ou Cmd+Shift+H)")
+        self.btn_hide.clicked.connect(self._handle_hide)
+        layout.addWidget(self.btn_hide)
+
     def set_active_mode(self, mode: str) -> None:
         """Updates visual state of buttons based on current mode."""
         self.btn_fixed.setProperty("active", "true" if mode == "draw_fixed" else "false")
@@ -184,6 +192,12 @@ class FloatingHUD(QFrame):
 
     def _handle_eraser(self) -> None:
         self.on_toggle_eraser()
+
+    def _handle_hide(self) -> None:
+        if self.on_hide:
+            self.on_hide()
+        else:
+            self.hide()
 
     # Draggable Window support & Brand click
     def mousePressEvent(self, event: QMouseEvent) -> None:

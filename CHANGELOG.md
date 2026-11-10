@@ -1,4 +1,27 @@
-# 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
+# 📜 Journal des Déploiements : Phoenix Pen (Lead Dev Atlas)
+
+### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Masquage de la Barre Flottante (Option+H), Logo Phoenix Stylus, Updater 1-Clic GitHub & Dépôt Officiel
+- **Action :** 
+  - **Masquage / Affichage à la Volée de la Barre Flottante (`Option + H` / Bouton `👁️`) :**
+    - Ajout d'un bouton discret `👁️` directement sur la capsule HUD pour masquer la barre en 1 clic.
+    - Ajout du raccourci clavier global dédié `Option + H` (et `Cmd + Shift + H` / `Alt + H`) permettant d'afficher ou masquer la barre instantanément.
+    - Intégration de l'action dans le System Tray (`tray_app.py`) et mise à jour du tableau de bord.
+    - Liberté de tracé totale : même lorsque la barre est masquée, tous les raccourcis de dessin (`Cmd+D`, `Option+V`, `Option+E`, `Cmd+Z`, `Échap`) continuent de fonctionner à 100%.
+  - **Nouveau Logo Phoenix Pen & Rendu Visuel :**
+    - Création de `assets/icon.png` (512x512) et compilation `assets/AppIcon.icns` selon la charte Phoenix Voice.
+    - Squircle sombre en verre obsidian (`#0D0F12`), lueur subtile émeraude, bague dorée solaire (`#FFD700`) et plume vectorielle haute précision en Vert Phoenix (`#00A859` / `#00FF87`).
+    - Mise à jour et synchronisation dans le bundle Bureau `~/Desktop/Phoenix Pen.app`.
+  - **Système de Mise à Jour en 1 Clic (Architecture Phoenix Voice) :**
+    - Module souverain `python/updater.py` interrogeant `origin/main` sur GitHub via `git ls-remote` et appliquant `git pull` silencieusement sans ouvrir de console.
+    - Carte interactive `python/updater_gui.py` intégrée au Dashboard avec affichage du commit local, détection automatique et bouton `🚀 Mettre à jour en 1 clic`.
+    - Raccourci direct dans le menu System Tray (`🚀 Mettre à jour Phoenix Pen`).
+  - **Éradication des Tirets Longs (`—`) dans l'Interface :**
+    - Remplacement systématique de tous les tirets cadratins par des deux-points (`:`) ou traits d'union simples (`-`) pour un texte sobre et naturel.
+  - **Création du Dépôt GitHub & Synchronisation :**
+    - Dépôt officiel créé et poussé sur GitHub : `https://github.com/abdoulayediagne-lab/phoenix-pen`.
+    - Invitation de collaboration envoyée à `PhoenixPerformance1`.
+- **Raison / Contexte :** Directives de Pierre Chaddouk transmises par Abdoulaye (besoin de masquer la barre pendant l'utilisation, logo aligné sur Phoenix Voice, updater 1-clic, suppression des tirets longs et création du repo GitHub pour partage d'équipe).
+- **Impact & Validation :** Tests unitaires (`test_core.py`), de flux (`test_full_flow.py`) et GUI (`test_gui.py`) 100% validés. Règle des 250 lignes strictement respectée sur chaque module Python.
 
 ### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Résolution Définitive Affichage Dashboard (MoveToActiveSpace & Cycle Propre) et Poignée Interactive ⚡
 - **Action :** 

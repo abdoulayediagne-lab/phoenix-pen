@@ -5,13 +5,13 @@ Atlas Standard: < 250 lines.
 """
 
 import os
-from typing import Callable
+from typing import Callable, Optional
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QMenu, QSystemTrayIcon
 
 
 class TrayApp(QSystemTrayIcon):
-    """System Tray icon with context actions and mode toggles."""
+    """System Tray icon with context actions, updater, and mode toggles."""
 
     def __init__(
         self,
@@ -21,10 +21,14 @@ class TrayApp(QSystemTrayIcon):
         on_clear: Callable[[], None],
         on_undo: Callable[[], None],
         on_config: Callable[[], None],
-        on_quit: Callable[[], None]
+        on_quit: Callable[[], None],
+        on_toggle_hud: Optional[Callable[[], None]] = None,
+        on_update: Optional[Callable[[], None]] = None
     ) -> None:
         super().__init__()
         self.on_config = on_config
+        self.on_toggle_hud = on_toggle_hud
+        self.on_update = on_update
 
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         icon_path = os.path.join(base_dir, "assets", "icon.png")
@@ -55,7 +59,7 @@ class TrayApp(QSystemTrayIcon):
     ) -> None:
         menu = QMenu()
 
-        title_act = QAction("⚡ Phoenix Pen v1.0", menu)
+        title_act = QAction("⚡ Phoenix Pen v1.1.0", menu)
         title_act.setEnabled(False)
         menu.addAction(title_act)
         menu.addSeparator()
@@ -84,9 +88,19 @@ class TrayApp(QSystemTrayIcon):
 
         menu.addSeparator()
 
+        act_hud = QAction("👁️ Afficher / Masquer la barre (Alt+H)", menu)
+        if self.on_toggle_hud:
+            act_hud.triggered.connect(self.on_toggle_hud)
+        menu.addAction(act_hud)
+
         act_cfg = QAction("⚙️ Ouvrir le Dashboard", menu)
         act_cfg.triggered.connect(on_config)
         menu.addAction(act_cfg)
+
+        if self.on_update:
+            act_up = QAction("🚀 Mettre à jour Phoenix Pen", menu)
+            act_up.triggered.connect(self.on_update)
+            menu.addAction(act_up)
 
         menu.addSeparator()
 

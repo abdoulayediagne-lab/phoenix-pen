@@ -72,25 +72,17 @@ class PhoenixPenApp:
 
         # 3. Floating Quick Toolbar (HUD)
         self.hud = FloatingHUD(
-            on_toggle_fixed=lambda: self._set_mode(MODE_DRAW_FIXED),
-            on_toggle_vanishing=lambda: self._set_mode(MODE_DRAW_VANISHING),
-            on_toggle_eraser=lambda: self._set_mode(MODE_ERASER),
-            on_clear=self.clear_all,
-            on_undo=self.undo,
-            on_dashboard=self.open_config,
-            config_mgr=self.config_mgr
+            lambda: self._set_mode(MODE_DRAW_FIXED), lambda: self._set_mode(MODE_DRAW_VANISHING),
+            lambda: self._set_mode(MODE_ERASER), self.clear_all, self.undo, self.open_config,
+            self.config_mgr, self.toggle_hud
         )
         self._position_hud()
 
         # 4. System Tray Icon
         self.tray = TrayApp(
-            on_toggle_fixed=lambda: self._set_mode(MODE_DRAW_FIXED),
-            on_toggle_vanishing=lambda: self._set_mode(MODE_DRAW_VANISHING),
-            on_toggle_eraser=lambda: self._set_mode(MODE_ERASER),
-            on_clear=self.clear_all,
-            on_undo=self.undo,
-            on_config=self.open_config,
-            on_quit=self.quit
+            lambda: self._set_mode(MODE_DRAW_FIXED), lambda: self._set_mode(MODE_DRAW_VANISHING),
+            lambda: self._set_mode(MODE_ERASER), self.clear_all, self.undo, self.open_config,
+            self.quit, self.toggle_hud, self.trigger_update
         )
         self.tray.show()
 
@@ -182,7 +174,19 @@ class PhoenixPenApp:
         self.hotkeys.sig_clear_all.connect(self.clear_all)
         self.hotkeys.sig_undo.connect(self.undo)
         self.hotkeys.sig_open_config.connect(self.open_config)
+        self.hotkeys.sig_toggle_hud.connect(self.toggle_hud)
         self.hotkeys.sig_escape.connect(self._on_escape)
+
+    def toggle_hud(self) -> None:
+        """Toggles HUD visibility on/off."""
+        if self.hud.isVisible(): self.hud.hide()
+        else: self.hud.show(); self.hud.raise_(); self.hud.set_native_window_level()
+
+    def trigger_update(self) -> None:
+        """Opens dashboard updater section directly."""
+        self.open_config()
+        if self.config_dialog and hasattr(self.config_dialog, "updater_card"):
+            self.config_dialog.updater_card.check_updates()
 
     def _on_escape(self) -> None:
         """Escape cancels drawing mode and returns to click-through navigation."""
@@ -223,9 +227,8 @@ class PhoenixPenApp:
         self.hotkeys.stop()
         for ov in self.overlays: ov.close()
         self.hud.close(); self.tray.hide()
-        try:
-            if os.path.exists(_PID_FILE): os.remove(_PID_FILE)
-        except Exception: pass
+        try: os.remove(_PID_FILE)
+        except OSError: pass
         self.app.quit()
 
     def run(self) -> int:

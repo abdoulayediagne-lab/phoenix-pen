@@ -26,6 +26,7 @@ class HotkeyManager(QObject):
     sig_clear_all = pyqtSignal()
     sig_undo = pyqtSignal()
     sig_open_config = pyqtSignal()
+    sig_toggle_hud = pyqtSignal()
     sig_escape = pyqtSignal()
 
     def __init__(self, config_mgr: Any) -> None:
@@ -116,29 +117,34 @@ class HotkeyManager(QObject):
                     if is_down: self.sig_undo.emit()
                     return None
 
-            # 3. Fixed Ink (kc 2: D) — Cmd+D, Cmd+Shift+D, Option+D
+            # 3. Fixed Ink (kc 2: D) : Cmd+D, Cmd+Shift+D, Option+D
             if kc == 2 and ((has_cmd and not has_alt) or (has_cmd and has_shift) or (has_alt and not has_cmd)):
                 if is_down: self.sig_toggle_draw_fixed.emit()
                 return None
 
-            # 4. Vanishing Ink (kc 9: V) — Cmd+Shift+V or Option+V (Never plain Cmd+V paste)
+            # 4. Vanishing Ink (kc 9: V) : Cmd+Shift+V or Option+V (Never plain Cmd+V paste)
             if kc == 9 and ((has_cmd and has_shift) or (has_alt and not has_cmd)):
                 if is_down: self.sig_toggle_draw_vanishing.emit()
                 return None
 
-            # 5. Eraser (kc 14: E) — Cmd+E, Cmd+Shift+E, Option+E
+            # 5. Eraser (kc 14: E) : Cmd+E, Cmd+Shift+E, Option+E
             if kc == 14 and ((has_cmd and not has_alt) or (has_cmd and has_shift) or (has_alt and not has_cmd)):
                 if is_down: self.sig_toggle_eraser.emit()
                 return None
 
-            # 6. Clear All (kc 8: C) — Cmd+Shift+C or Option+C (Never plain Cmd+C copy)
+            # 6. Clear All (kc 8: C) : Cmd+Shift+C or Option+C (Never plain Cmd+C copy)
             if kc == 8 and ((has_cmd and has_shift) or (has_alt and not has_cmd)):
                 if is_down: self.sig_clear_all.emit()
                 return None
 
-            # 7. Dashboard (kc 35: P) — Cmd+Shift+P or Option+P (Never plain Cmd+P print)
+            # 7. Dashboard (kc 35: P) : Cmd+Shift+P or Option+P (Never plain Cmd+P print)
             if kc == 35 and ((has_cmd and has_shift) or (has_alt and not has_cmd)):
                 if is_down: self.sig_open_config.emit()
+                return None
+
+            # 8. Toggle HUD (kc 4: H) : Cmd+Shift+H or Option+H
+            if kc == 4 and ((has_cmd and has_shift) or (has_alt and not has_cmd)):
+                if is_down: self.sig_toggle_hud.emit()
                 return None
 
         except Exception as e:
@@ -174,6 +180,8 @@ class HotkeyManager(QObject):
             self.sig_clear_all.emit()
         elif vk == 35 or c == 'p':
             self.sig_open_config.emit()
+        elif vk == 4 or c == 'h':
+            self.sig_toggle_hud.emit()
         elif vk in (6, 13) or c == 'z':
             self.sig_undo.emit()
 

@@ -10,7 +10,7 @@
   "drawing": {
     "stroke_width": 6,
     "eraser_width": 150,
-    "active_color": "#AEDE93",
+    "active_color": "#DDC3A5",
     "neon_glow": false,
     "neon_intensity": 0.75,
     "vanishing_duration": 2.0,
