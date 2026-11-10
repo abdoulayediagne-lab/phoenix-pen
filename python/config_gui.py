@@ -24,15 +24,16 @@ class ConfigWindow(QDialog):
         self.config_mgr = config_mgr
         self.setWindowTitle("⚡ Phoenix Pen — Configuration & Dashboard")
         self.setFixedSize(580, 790)
+        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.WindowStaysOnTopHint)
         self.active_color = self.config_mgr.get("drawing", "active_color", "#00FF87")
         self.setStyleSheet("""
             QDialog {
-                background-color: #121614;
+                background-color: #0D0F12;
                 color: #FFFFFF;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             }
             QGroupBox {
-                border: 1px solid #1E2B23;
+                border: 1px solid #1F232B;
                 border-radius: 8px;
                 margin-top: 8px;
                 padding-top: 8px;
@@ -107,23 +108,16 @@ class ConfigWindow(QDialog):
         self.fade_combo.currentIndexChanged.connect(self._on_fade_changed)
         ink_form.addRow("⏳ Disparition Encre :", self.fade_combo)
 
-        # Stroke Width Slider (1 to 100 px)
-        self.width_slider = QSlider(Qt.Orientation.Horizontal)
-        self.width_slider.setRange(1, 100)
-        cw = int(self.config_mgr.get("drawing", "stroke_width", 4))
-        self.width_slider.setValue(cw)
-        self.width_label = QLabel(f"{cw} px")
-        self.width_slider.valueChanged.connect(self._on_width_changed)
+        # Sliders: Stroke Width & Eraser Width
+        self.width_slider = QSlider(Qt.Orientation.Horizontal); self.width_slider.setRange(1, 100)
+        cw = int(self.config_mgr.get("drawing", "stroke_width", 4)); self.width_slider.setValue(cw)
+        self.width_label = QLabel(f"{cw} px"); self.width_slider.valueChanged.connect(self._on_width_changed)
         wl = QHBoxLayout(); wl.addWidget(self.width_slider); wl.addWidget(self.width_label)
         ink_form.addRow("✏️ Épaisseur du trait (1-100px) :", wl)
 
-        # Eraser Width Slider (6 to 150 px)
-        self.eraser_slider = QSlider(Qt.Orientation.Horizontal)
-        self.eraser_slider.setRange(6, 150)
-        ew = int(self.config_mgr.get("drawing", "eraser_width", 24))
-        self.eraser_slider.setValue(ew)
-        self.eraser_label = QLabel(f"{ew} px")
-        self.eraser_slider.valueChanged.connect(self._on_eraser_changed)
+        self.eraser_slider = QSlider(Qt.Orientation.Horizontal); self.eraser_slider.setRange(6, 150)
+        ew = int(self.config_mgr.get("drawing", "eraser_width", 24)); self.eraser_slider.setValue(ew)
+        self.eraser_label = QLabel(f"{ew} px"); self.eraser_slider.valueChanged.connect(self._on_eraser_changed)
         el = QHBoxLayout(); el.addWidget(self.eraser_slider); el.addWidget(self.eraser_label)
         ink_form.addRow("🧹 Épaisseur de la gomme (6-150px) :", el)
 
@@ -212,8 +206,7 @@ class ConfigWindow(QDialog):
         layout.addWidget(save_btn)
 
     def _on_fade_changed(self, idx: int) -> None:
-        dur_map = {0: 1.5, 1: 2.0, 2: 3.0, 3: 5.0}
-        self.config_mgr.set("drawing", "vanishing_duration", dur_map.get(idx, 2.0))
+        self.config_mgr.set("drawing", "vanishing_duration", {0: 1.5, 1: 2.0, 2: 3.0, 3: 5.0}.get(idx, 2.0))
 
     def _on_width_changed(self, val: int) -> None:
         self.width_label.setText(f"{val} px"); self.config_mgr.set("drawing", "stroke_width", val)
@@ -222,8 +215,7 @@ class ConfigWindow(QDialog):
         self.eraser_label.setText(f"{val} px"); self.config_mgr.set("drawing", "eraser_width", val)
 
     def _select_color(self, hex_val: str) -> None:
-        self.active_color = hex_val.upper()
-        self._update_preview(self.active_color)
+        self.active_color = hex_val.upper(); self._update_preview(self.active_color)
         self.config_mgr.set("drawing", "active_color", self.active_color)
 
     def _update_preview(self, hex_val: str) -> None:
@@ -237,6 +229,10 @@ class ConfigWindow(QDialog):
             nswin = objc.objc_object(c_void_p=int(self.winId())).window()
             if nswin is not None:
                 nswin.setCollectionBehavior_(AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary | AppKit.NSWindowCollectionBehaviorStationary)
+                nswin.setLevel_(AppKit.NSStatusWindowLevel + 2)
+                nswin.orderFrontRegardless()
+                nswin.makeKeyAndOrderFront_(None)
+                AppKit.NSApp.activateIgnoringOtherApps_(True)
         except Exception: pass
 
     def _save_settings(self) -> None:
@@ -244,5 +240,4 @@ class ConfigWindow(QDialog):
         self.config_mgr.set("drawing", "vanishing_duration", dur)
         for k, v in [("stroke_width", self.width_slider.value()), ("eraser_width", self.eraser_slider.value()), ("neon_glow", self.glow_check.isChecked()), ("shape_recognition", self.shape_check.isChecked()), ("active_color", self.active_color)]:
             self.config_mgr.set("drawing", k, v)
-        self.config_mgr.set("system", "floating_hud", self.hud_check.isChecked())
-        self.accept()
+        self.config_mgr.set("system", "floating_hud", self.hud_check.isChecked()); self.accept()

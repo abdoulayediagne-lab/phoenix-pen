@@ -52,36 +52,38 @@ class FloatingHUD(QFrame):
         self.setFixedWidth(560)
         self.setStyleSheet("""
             FloatingHUD {
-                background-color: rgba(18, 22, 20, 245);
-                border: 2px solid rgba(0, 255, 135, 180);
+                background-color: rgba(13, 15, 18, 245);
+                border: 1px solid rgba(255, 255, 255, 30);
                 border-radius: 24px;
             }
             QPushButton {
-                background-color: rgba(30, 40, 35, 200);
-                color: #FFFFFF;
-                border: 1px solid rgba(0, 168, 89, 120);
+                background-color: rgba(255, 255, 255, 16);
+                color: #E5E7EB;
+                border: 1px solid rgba(255, 255, 255, 22);
                 border-radius: 16px;
                 padding: 4px 12px;
                 font-size: 13px;
-                font-weight: bold;
+                font-weight: 600;
             }
             QPushButton:hover {
-                background-color: rgba(0, 168, 89, 220);
-                border: 1px solid #00FF87;
+                background-color: rgba(255, 255, 255, 36);
+                border: 1px solid rgba(255, 255, 255, 50);
                 color: #FFFFFF;
             }
             QPushButton[active="true"] {
                 background-color: #00A859;
-                border: 2px solid #00FF87;
-                color: #000000;
+                border: 1.5px solid #00FF87;
+                color: #FFFFFF;
             }
             QPushButton#dashBtn {
-                background-color: rgba(0, 255, 135, 230);
-                color: #0B0E0D;
-                border: none;
+                background-color: rgba(255, 255, 255, 22);
+                color: #E5E7EB;
+                border: 1px solid rgba(255, 255, 255, 30);
             }
             QPushButton#dashBtn:hover {
-                background-color: #00FF87;
+                background-color: rgba(255, 255, 255, 45);
+                border: 1px solid rgba(255, 255, 255, 60);
+                color: #FFFFFF;
             }
         """)
 

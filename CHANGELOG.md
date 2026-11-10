@@ -1,5 +1,27 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Verrou Instance Unique (Anti-Doublon Capsule), DA Phoenix Voice (Matte Obsidian Glass) & Élévation Immédiate Dashboard
+- **Action :** 
+  - **Verrou d'Instance Unique Strict (Éradication des Doublons de Capsule HUD) :**
+    - Implémentation du protocole `_enforce_single_instance()` avec verrou fichier exclusif `fcntl.flock` sur `/tmp/phoenix_pen.lock` et contrôle automatique du PID via `/tmp/phoenix_pen.pid`.
+    - Terminaison immédiate de tout processus résiduel ou concurrent lors d'un lancement depuis le Bureau (`Phoenix Pen.app`) ou le terminal.
+    - Éradication définitive de la capsule en double et des interférences de clics entre overlays superposés.
+  - **Refonte DA Phoenix Voice (Obsidian Matte Glass & Écran de Contrôle Sobre) :**
+    - Suppression de la bordure vert fluo agressive et des fonds saturés sur la capsule flottante.
+    - Application de la charte graphique officielle Phoenix Voice :
+      - Fond capsule : verre fumé obsidian profond `rgba(13, 15, 18, 0.96)` avec bordure ultrafine `1px solid rgba(255, 255, 255, 0.12)`.
+      - Boutons : verre dépoli sombre `rgba(255, 255, 255, 0.06)`, texte `#E5E7EB` et survol `#FFFFFF`.
+      - Illumination dynamique de l'état actif : mise en valeur Vert Phoenix `#00A859` avec liseré `#00FF87` uniquement lorsque le feutre fixe, fade ou la gomme est sélectionné.
+      - Bouton Dashboard : harmonisé en bouton sombre élégant, fini le bloc vert fluo distrayant.
+  - **Élévation Cocoa et Centrage Immédiat du Dashboard (`ConfigWindow`) :**
+    - Centrage automatique de la fenêtre de réglages sur l'écran actif où se situe le curseur de la souris.
+    - Élévation Cocoa au niveau 27 (`NSStatusWindowLevel + 2`) avec `orderFrontRegardless()`, `makeKeyAndOrderFront_` et `activateIgnoringOtherApps_(True)`.
+    - Le Dashboard s'ouvre désormais instantanément au premier plan par-dessus n'importe quelle application (VS Code, Chrome, Claude) dès le clic sur `⚙️ Dashboard` ou via le raccourci global `Option + P` / `Cmd + Shift + P`.
+  - **Reconstruction du Bundle Natif macOS :**
+    - Synchronisation et reconstruction de `~/Desktop/Phoenix Pen.app` via `installer_app_macos.sh`.
+- **Raison / Contexte :** Retours en direct d'Abdoulaye (capsule affichée en double sur l'écran, Dashboard qui ne s'affichait pas au premier plan lors du clic, et harmonisation visuelle avec l'accessoire système Phoenix Voice).
+- **Impact & Validation :** 100% de réussite sur les tests unitaires (`test_core.py`), de flux (`test_full_flow.py`) et d'interface (`test_gui.py`). Règle des 250 lignes strictement respectée sur chaque module Python.
+
 ### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Calque Universel "Vitrine de Verre", Raccourci Cmd+D 100% Débloqué (kCGKeyboardEventAutorepeat), Snapping Rectangles/Cercles & Support Plein Écran
 - **Action :** 
   - **Éradication Définitive du Blocage de `Cmd+D` (`kCGKeyboardEventAutorepeat`) :**

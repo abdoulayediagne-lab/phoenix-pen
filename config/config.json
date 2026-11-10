@@ -9,7 +9,7 @@
   },
   "drawing": {
     "stroke_width": 6,
-    "eraser_width": 44,
+    "eraser_width": 150,
     "active_color": "#00FF87",
     "neon_glow": false,
     "neon_intensity": 0.75,

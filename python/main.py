@@ -4,7 +4,12 @@ Orchestrates Multi-Screen Overlays, System Tray, Floating HUD, Hotkeys, and Dash
 Atlas Standard: < 250 lines.
 """
 
+import fcntl
+import os
+import signal
+import subprocess
 import sys
+import time
 from typing import List
 from PyQt6.QtGui import QCursor, QGuiApplication
 from PyQt6.QtWidgets import QApplication
@@ -17,6 +22,39 @@ from overlay_window import (
     MODE_CLICK_THROUGH, MODE_DRAW_FIXED, MODE_DRAW_VANISHING, MODE_ERASER, OverlayWindow
 )
 from tray_app import TrayApp
+
+_LOCK_FILE = "/tmp/phoenix_pen.lock"
+_PID_FILE = "/tmp/phoenix_pen.pid"
+_lock_fd = None
+
+
+def _enforce_single_instance() -> None:
+    """Ensures only ONE instance of Phoenix Pen runs at any time."""
+    global _lock_fd
+    my_pid = os.getpid()
+    if os.path.exists(_PID_FILE):
+        try:
+            with open(_PID_FILE, "r") as f:
+                old_pid = int(f.read().strip())
+            if old_pid != my_pid:
+                try: os.kill(old_pid, signal.SIGKILL)
+                except OSError: pass
+        except Exception: pass
+    try:
+        out = subprocess.check_output(["pgrep", "-f", "phoenix-pen.*main\\.py"], text=True)
+        for line in out.strip().splitlines():
+            pid = int(line.strip())
+            if pid != my_pid:
+                try: os.kill(pid, signal.SIGKILL)
+                except OSError: pass
+    except Exception: pass
+    try:
+        _lock_fd = open(_LOCK_FILE, "w")
+        fcntl.flock(_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with open(_PID_FILE, "w") as f:
+            f.write(str(my_pid))
+    except (IOError, OSError):
+        sys.exit(0)
 
 
 class PhoenixPenApp:
@@ -166,25 +204,30 @@ class PhoenixPenApp:
         if not self.config_dialog:
             self.config_dialog = ConfigWindow(self.config_mgr)
             self.config_dialog.finished.connect(self._on_config_closed)
-        self.config_dialog.show()
-        self.config_dialog.raise_()
-        self.config_dialog.activateWindow()
+        cur = QGuiApplication.screenAt(QCursor.pos()) or QGuiApplication.primaryScreen()
+        if cur:
+            g = cur.availableGeometry()
+            self.config_dialog.move(g.x() + (g.width() - 580) // 2, g.y() + (g.height() - 790) // 2)
+        self.config_dialog.show(); self.config_dialog.raise_(); self.config_dialog.activateWindow()
+        if sys.platform == "darwin":
+            try:
+                import AppKit
+                AppKit.NSApp.activateIgnoringOtherApps_(True)
+            except Exception: pass
 
     def _on_config_closed(self) -> None:
-        if self.config_mgr.get("system", "floating_hud", True):
-            self._position_hud()
-        else:
-            self.hud.hide()
-        for ov in self.overlays:
-            ov.update()
+        if self.config_mgr.get("system", "floating_hud", True): self._position_hud()
+        else: self.hud.hide()
+        for ov in self.overlays: ov.update()
 
     def quit(self) -> None:
         print("[PhoenixPen] Shutting down...")
         self.hotkeys.stop()
-        for ov in self.overlays:
-            ov.close()
-        self.hud.close()
-        self.tray.hide()
+        for ov in self.overlays: ov.close()
+        self.hud.close(); self.tray.hide()
+        try:
+            if os.path.exists(_PID_FILE): os.remove(_PID_FILE)
+        except Exception: pass
         self.app.quit()
 
     def run(self) -> int:
@@ -193,6 +236,7 @@ class PhoenixPenApp:
 
 
 def main() -> int:
+    _enforce_single_instance()
     open_dash = "--open-dashboard" in sys.argv or "-d" in sys.argv
     app_controller = PhoenixPenApp(open_dashboard_on_start=open_dash)
     return app_controller.run()
