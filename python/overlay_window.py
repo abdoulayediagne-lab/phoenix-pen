@@ -82,6 +82,8 @@ class OverlayWindow(QWidget):
                         | AppKit.NSWindowCollectionBehaviorStationary | AppKit.NSWindowCollectionBehaviorIgnoresCycle
                     )
                     nswin.setCollectionBehavior_(behavior)
+                    if hasattr(nswin, "setStyleMask_"):
+                        nswin.setStyleMask_(nswin.styleMask() | AppKit.NSWindowStyleMaskNonactivatingPanel)
                     if hasattr(nswin, "setHidesOnDeactivate_"): nswin.setHidesOnDeactivate_(False)
                     if hasattr(nswin, "setFloatingPanel_"): nswin.setFloatingPanel_(True)
                     if hasattr(nswin, "setBecomesKeyOnlyIfNeeded_"): nswin.setBecomesKeyOnlyIfNeeded_(False)

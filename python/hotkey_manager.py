@@ -86,18 +86,17 @@ class HotkeyManager(QObject):
                 return event
 
             kc = Quartz.CGEventGetIntegerValueField(event, Quartz.kCGKeyboardEventKeycode)
+            is_repeat = bool(Quartz.CGEventGetIntegerValueField(event, Quartz.kCGKeyboardEventAutorepeat))
             flags = Quartz.CGEventGetFlags(event)
             has_cmd = bool(flags & Quartz.kCGEventFlagMaskCommand)
             has_alt = bool(flags & Quartz.kCGEventFlagMaskAlternate)
             has_shift = bool(flags & Quartz.kCGEventFlagMaskShift)
             has_ctrl = bool(flags & Quartz.kCGEventFlagMaskControl)
             is_down = (ev_type == Quartz.kCGEventKeyDown)
-            if is_down:
-                if kc in self._keys_down:
-                    return None if kc in (2, 9, 14, 8, 35, 53, 6, 13) else event
-                self._keys_down.add(kc)
-            else:
-                self._keys_down.discard(kc)
+
+            # Ignore automatic key repeat when holding keys down
+            if is_repeat and is_down:
+                return None if kc in (2, 9, 14, 8, 35, 53, 6, 13) else event
 
             is_active = bool(self.is_active_fn and self.is_active_fn())
 

@@ -143,11 +143,10 @@ class ShapeRecognizer:
         std_dev = math.sqrt(variance)
         cv = std_dev / avg_r
 
-        # Strict circle test: CV must be < 0.07 to never confuse with square (cv ~0.11)
-        if cv <= 0.07:
-            # Also check circle perimeter: 2 * pi * r
+        # Circle test: allow natural mouse hand wobble (cv <= 0.11)
+        if cv <= 0.11:
             expected_perim = 2.0 * math.pi * avg_r
-            if abs(total_arc - expected_perim) / expected_perim < 0.15:
+            if abs(total_arc - expected_perim) / expected_perim < 0.20:
                 return {
                     "type": "circle",
                     "center": (cx, cy),
@@ -192,11 +191,11 @@ class ShapeRecognizer:
         if w < 20 or h < 20:
             return None
 
-        # Perimeter of bounding box: rectangle points travel along sides, error < 10%
+        # Perimeter of bounding box: rectangle points travel along sides, error < 22%
         bbox_perim = 2.0 * (w + h)
         perim_ratio = abs(total_arc - bbox_perim) / bbox_perim
 
-        if perim_ratio > 0.10:
+        if perim_ratio > 0.22:
             return None
 
         # Check how close points are to the 4 sides of the bounding box
@@ -212,8 +211,8 @@ class ShapeRecognizer:
         diag = math.hypot(w, h)
         norm_dev = mean_dist / diag
 
-        if norm_dev < (1.0 - self.threshold * 0.90):  # norm_dev < ~0.15
-            shape_type = "square" if abs(w - h) / max(w, h) < 0.15 else "rectangle"
+        if norm_dev < (1.0 - self.threshold * 0.82):  # norm_dev < ~0.28
+            shape_type = "square" if abs(w - h) / max(w, h) < 0.18 else "rectangle"
             return {
                 "type": shape_type,
                 "rect": (min_x, min_y, w, h),

@@ -1,8 +1,16 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
-### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Calque Universel "Vitrine de Verre", Mode Accessory macOS, Splines Catmull-Rom Bézier & Découpe Gomme Totale
+### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Calque Universel "Vitrine de Verre", Raccourci Cmd+D 100% Débloqué (kCGKeyboardEventAutorepeat), Snapping Rectangles/Cercles & Support Plein Écran
 - **Action :** 
-  - **Calque de Verre Universel "Vitrine Plein Écran" & Politique macOS Accessory (`NSApplicationActivationPolicyAccessory`) :**
+  - **Éradication Définitive du Blocage de `Cmd+D` (`kCGKeyboardEventAutorepeat`) :**
+    - Suppression du set `_keys_down` qui restait verrouillé lors des désynchronisations de `KeyUp` sous macOS.
+    - Utilisation du champ natif Quartz Apple `Quartz.kCGKeyboardEventAutorepeat` : chaque appui sur `Cmd+D`, `Cmd+Shift+D` ou `Option+D` bascule instantanément en mode dessin, sans jamais se bloquer.
+  - **Snapping Intelligent Immédiat des Rectangles et Cercles (`ShapeRecognizer`) :**
+    - Assouplissement du seuil de tolérance périmétrique du rectangle de 10% à 22% (`perim_ratio < 0.22`) : les rectangles dessinés à main levée se snappent immédiatement en formes géométriques parfaites.
+    - Élargissement de la détection de cercle (`cv <= 0.11`) pour éviter la fausse transformation en ovale lors d'un tracé circulaire à la souris.
+  - **Support Plein Écran Natif (`NSWindowStyleMaskNonactivatingPanel`) :**
+    - Injection du style mask `NSWindowStyleMaskNonactivatingPanel` sur la capsule et les overlays : persistance et survol garantis au-dessus des applications en plein écran natif (VS Code plein écran, Chrome plein écran).
+  - **Calque de Verre Universel "Vitrine Plein Écran" & Politique macOS Accessory :**
     - Définition de la politique d'application en tant qu'accessoire système natif (`NSApplicationActivationPolicyAccessory`). Phoenix Pen n'apparaît pas dans le Dock et ne déclenche aucune transition de bureau intempestive sous Mission Control lors de l'activation.
     - Ajout des attributs Cocoa `NSWindowCollectionBehaviorStationary | NSWindowCollectionBehaviorIgnoresCycle`, `setFloatingPanel_(True)`, `setBecomesKeyOnlyIfNeeded_(False)` et `setWorksWhenModal_(True)` sur tous les overlays et la capsule.
     - L'overlay agit comme une véritable vitrine de verre posée par-dessus l'écran : dès l'activation (`Cmd+D` ou clic sur `[ 🖋️ Fixe ]`), l'overlay devient premier plan actif (`focus_active`) sur l'écran où se trouve le curseur, interceptant 100% des clics et gestes de dessin sans laisser fuiter aucun clic vers les applications sous-jacentes (Aperçu, VS Code, Chrome).
@@ -15,7 +23,7 @@
   - **Raccourcis & Restauration Souris Instantanée :**
     - La touche `Échap` (Esc) ou un nouveau clic/raccourci désactive immédiatement le mode dessin et rétablit le clic direct vers les applications sous-jacentes.
     - `Cmd+Z` annule le dernier tracé sans impacter les documents ouverts.
-- **Raison / Contexte :** Retours et alignement stratégique de Pierre Chaddouk et Abdoulaye : disposer d'un layer vitrine universel étanche par-dessus toutes les fenêtres et espaces, et obtenir un trait fluide et moderne pour la démo.
+- **Raison / Contexte :** Retours d'Abdoulaye et alignement avec Pierre Chaddouk : déblocage du raccourci `Cmd+D` à chaque frappe, snapping net des rectangles et cercles, et étanchéité totale du layer vitrine au-dessus de tout écran et tout bureau.
 - **Impact & Validation :** Tests unitaires (`test_core.py`), simulations de flux (`test_full_flow.py`) et tests GUI (`test_gui.py`) 100% validés. Tous les modules Python respectent strictement la limite Atlas des 250 lignes.
 
 ### [2026-11-09] - Abdoulaye (adiagne) [via Atlas] - Migration QNSPanel de l'Overlay (Multi-Bureaux 100%), Fin des Clics Sauvages vers Aperçu
