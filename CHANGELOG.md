@@ -1,6 +1,17 @@
 # 📜 Journal des Déploiements : Phoenix Pen (Lead Dev Atlas)
 
-### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Nouveau Logo Souverain Blanc & Vert (Emblème Phoenix Voice), Synchronisation App Bundle Bureau & Éradication Complète des Tirets Longs
+### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Encadré Vert Souverain & Emblème Blanc (Symétrie Totale Phoenix Voice) & Transfert GitHub PhoenixPerformance1
+- **Action :**
+  - **Logo Phoenix Pen Déploiement Définitif (Encadré Vert & Emblème Blanc) :**
+    - Réalisation de la symétrie parfaite avec `Phoenix Voice` : là où Phoenix Voice arbore un encadré noir (`#0B0F17`) avec son emblème blanc (`#FFFFFF`), Phoenix Pen adopte désormais l'encadré en Vert Phoenix vibrant (`#00A859` vers `#00FF87`) avec l'emblème Phoenix officiel 100% blanc pur au centre.
+    - Reprise exacte de la forme squircle Apple avec coins transparents et antialiasing natif.
+    - Génération du master `assets/icon.png` (512x512) et compilation du fichier multi-résolution `assets/AppIcon.icns`.
+    - Synchronisation et rafraîchissement immédiat de `~/Desktop/Phoenix Pen.app` et du System Tray (`tray_app.py`).
+  - **Initiation du Transfert GitHub vers PhoenixPerformance1 :**
+    - Transfert officiel du dépôt `phoenix-pen` déclenché via l'API GitHub vers le compte propriétaire `PhoenixPerformance1`.
+    - Invitation de transfert en attente de validation directe par Pierre / PhoenixPerformance1 pour hébergement centralisé aux côtés de `Phoenix Voice`.
+- **Raison / Contexte :** Demande explicite d'Abdoulaye suite à la capture d'écran de référence de Phoenix Voice : préserver le blanc pur pour l'emblème et transformer l'encadré noir en vert, et créer le repo centralisé dans `PhoenixPerformance1`.
+- **Impact & Validation :** Tests unitaires (`test_core.py`), de flux (`test_full_flow.py`) et GUI (`test_gui.py`) 100% validés. Modules Python strictement conformes à la limite (< 250 lignes).
 - **Action :**
   - **Logo Officiel Phoenix Blanc & Vert (Emblème Souverain Phoenix Performance) :**
     - Reprise exacte de la géométrie de l'emblème Phoenix officiel (`logo_phoenix.png`, 1002x1000 px), identique à celle de `Phoenix Voice`.
