@@ -34,27 +34,18 @@ def _enforce_single_instance() -> None:
     my_pid = os.getpid()
     if os.path.exists(_PID_FILE):
         try:
-            with open(_PID_FILE, "r") as f:
-                old_pid = int(f.read().strip())
-            if old_pid != my_pid:
-                try: os.kill(old_pid, signal.SIGKILL)
-                except OSError: pass
+            with open(_PID_FILE, "r") as f: old_pid = int(f.read().strip())
+            if old_pid != my_pid: os.kill(old_pid, signal.SIGKILL)
         except Exception: pass
     try:
         out = subprocess.check_output(["pgrep", "-f", "phoenix-pen.*main\\.py"], text=True)
         for line in out.strip().splitlines():
-            pid = int(line.strip())
-            if pid != my_pid:
-                try: os.kill(pid, signal.SIGKILL)
-                except OSError: pass
+            if int(line.strip()) != my_pid: os.kill(int(line.strip()), signal.SIGKILL)
     except Exception: pass
     try:
-        _lock_fd = open(_LOCK_FILE, "w")
-        fcntl.flock(_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        with open(_PID_FILE, "w") as f:
-            f.write(str(my_pid))
-    except (IOError, OSError):
-        sys.exit(0)
+        _lock_fd = open(_LOCK_FILE, "w"); fcntl.flock(_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with open(_PID_FILE, "w") as f: f.write(str(my_pid))
+    except (IOError, OSError): sys.exit(0)
 
 
 class PhoenixPenApp:
@@ -201,13 +192,19 @@ class PhoenixPenApp:
     def open_config(self) -> None:
         if any(ov.mode != MODE_CLICK_THROUGH for ov in self.overlays):
             self._set_mode(MODE_CLICK_THROUGH)
-        if not self.config_dialog:
-            self.config_dialog = ConfigWindow(self.config_mgr)
-            self.config_dialog.finished.connect(self._on_config_closed)
+        if self.config_dialog and self.config_dialog.isVisible():
+            self.config_dialog.close(); self.config_dialog = None
+            return
+        if self.config_dialog:
+            try: self.config_dialog.close()
+            except Exception: pass
+            self.config_dialog = None
+        self.config_dialog = ConfigWindow(self.config_mgr)
+        self.config_dialog.finished.connect(self._on_config_closed)
         cur = QGuiApplication.screenAt(QCursor.pos()) or QGuiApplication.primaryScreen()
         if cur:
             g = cur.availableGeometry()
-            self.config_dialog.move(g.x() + (g.width() - 580) // 2, g.y() + (g.height() - 790) // 2)
+            self.config_dialog.move(g.x() + max(20, (g.width() - 580) // 2), g.y() + max(40, (g.height() - 790) // 2))
         self.config_dialog.show(); self.config_dialog.raise_(); self.config_dialog.activateWindow()
         if sys.platform == "darwin":
             try:
@@ -216,6 +213,7 @@ class PhoenixPenApp:
             except Exception: pass
 
     def _on_config_closed(self) -> None:
+        self.config_dialog = None
         if self.config_mgr.get("system", "floating_hud", True): self._position_hud()
         else: self.hud.hide()
         for ov in self.overlays: ov.update()

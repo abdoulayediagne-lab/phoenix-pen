@@ -123,7 +123,9 @@ class FloatingHUD(QFrame):
 
         # Drag handle / Brand logo
         self.brand_lbl = QLabel("⚡")
-        self.brand_lbl.setStyleSheet("color: #00FF87; font-size: 15px; font-weight: bold;")
+        self.brand_lbl.setToolTip("⚡ Phoenix Pen — Poignée de déplacement\n• Glissez pour déplacer la barre\n• Cliquez pour ouvrir le Dashboard")
+        self.brand_lbl.setCursor(Qt.CursorShape.SizeAllCursor)
+        self.brand_lbl.setStyleSheet("color: #00FF87; font-size: 15px; font-weight: bold; padding: 0 4px;")
         layout.addWidget(self.brand_lbl)
 
         # 1. Encre Fixe
@@ -183,9 +185,10 @@ class FloatingHUD(QFrame):
     def _handle_eraser(self) -> None:
         self.on_toggle_eraser()
 
-    # Draggable Window support
+    # Draggable Window support & Brand click
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
+            self._press_pos = event.globalPosition().toPoint()
             self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
             event.accept()
 
@@ -193,3 +196,11 @@ class FloatingHUD(QFrame):
         if event.buttons() == Qt.MouseButton.LeftButton and not self.drag_position.isNull():
             self.move(event.globalPosition().toPoint() - self.drag_position)
             event.accept()
+
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton and getattr(self, "_press_pos", None):
+            if (event.globalPosition().toPoint() - self._press_pos).manhattanLength() < 5:
+                if self.childAt(event.pos()) == self.brand_lbl:
+                    self.on_dashboard()
+            self._press_pos = None
+        super().mouseReleaseEvent(event)

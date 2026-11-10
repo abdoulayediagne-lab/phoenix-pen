@@ -228,8 +228,12 @@ class ConfigWindow(QDialog):
             import AppKit, objc
             nswin = objc.objc_object(c_void_p=int(self.winId())).window()
             if nswin is not None:
-                nswin.setCollectionBehavior_(AppKit.NSWindowCollectionBehaviorCanJoinAllSpaces | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary | AppKit.NSWindowCollectionBehaviorStationary)
+                nswin.setCollectionBehavior_(
+                    AppKit.NSWindowCollectionBehaviorMoveToActiveSpace
+                    | AppKit.NSWindowCollectionBehaviorFullScreenAuxiliary
+                )
                 nswin.setLevel_(AppKit.NSStatusWindowLevel + 2)
+                nswin.center()
                 nswin.orderFrontRegardless()
                 nswin.makeKeyAndOrderFront_(None)
                 AppKit.NSApp.activateIgnoringOtherApps_(True)

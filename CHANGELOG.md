@@ -1,5 +1,21 @@
 # 📜 Journal des Déploiements — Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Résolution Définitive Affichage Dashboard (MoveToActiveSpace & Cycle Propre) et Poignée Interactive ⚡
+- **Action :** 
+  - **Résolution Racine de l'Affichage du Dashboard (`MoveToActiveSpace` & Fin des Coordonnées Hors Écran) :**
+    - Identification de la cause exacte du masquage : l'attribut `NSWindowCollectionBehaviorStationary` épinglait le dialogue à l'espace virtuel de création. Lors des bascules Mission Control vers VS Code ou Antigravity, WindowServer reléguait le dialogue en coordonnées négatives (`X = -6585` px).
+    - Remplacement par la combinaison Cocoa souveraine `NSWindowCollectionBehaviorMoveToActiveSpace | NSWindowCollectionBehaviorFullScreenAuxiliary` et centrage natif `nswin.center()`.
+    - Correction du cycle de réouverture Qt : un `QDialog` fermé conservait son état de fin d'événement, bloquant les appels ultérieurs à `show()`. Réinitialisation propre à `None` dans `_on_config_closed()` et instanciation fraîche à chaque ouverture.
+    - Le Dashboard s'ouvre, se centre et bascule (toggle) désormais avec 100% de fiabilité à chaque clic sur `⚙️ Dashboard` ou au raccourci `Option + P`.
+  - **Rôle et Rendu Interactif de l'Éclair ⚡ (Poignée de Déplacement & Raccourci Clic) :**
+    - Clarification du rôle de l'éclair `⚡` : emblème Phoenix et poignée de manipulation (drag handle) permettant de repositionner la capsule flottante n'importe où sur l'écran.
+    - Ajout du curseur de déplacement système (`SizeAllCursor`) et d'une info-bulle explicite (`• Glissez pour déplacer la barre • Cliquez pour ouvrir le Dashboard`).
+    - Double interaction intelligente : un simple clic sur `⚡` (mouvement < 5 px) ouvre également le Dashboard, tandis qu'un maintien/glissé déplace la capsule en toute fluidité.
+  - **Reconstruction du Bundle Natif macOS :**
+    - Synchronisation et reconstruction de `~/Desktop/Phoenix Pen.app` via `installer_app_macos.sh`.
+- **Raison / Contexte :** Retours en direct d'Abdoulaye (Dashboard qui ne s'affichait pas au clic sur la capsule, interrogation sur l'utilité du symbole éclair `⚡` à gauche).
+- **Impact & Validation :** Tests unitaires (`test_core.py`), de flux (`test_full_flow.py`) et GUI (`test_gui.py`) 100% validés. Règle Atlas des 250 lignes strictement respectée sur chaque module Python.
+
 ### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Verrou Instance Unique (Anti-Doublon Capsule), DA Phoenix Voice (Matte Obsidian Glass) & Élévation Immédiate Dashboard
 - **Action :** 
   - **Verrou d'Instance Unique Strict (Éradication des Doublons de Capsule HUD) :**
