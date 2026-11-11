@@ -1,5 +1,16 @@
 # 📜 Journal des Déploiements : Phoenix Pen (Lead Dev Atlas)
 
+### [2026-11-11] - Abdoulaye (adiagne) [via Atlas] - Notification Flottante Automatique de Mise à Jour (UpdateHUD) & Fiabilisation Redémarrage
+- **Action :**
+  - Création du module dédié `python/update_hud.py` (< 250 lignes) implémentant la capsule flottante non-intrusive `UpdateHUD` (style Phoenix Voice : pilule sombre `#0A0C10`, bordure ambre `#F59E0B` puis vert néon `#00FF87` au succès, bouton 1-clic `Mettre à jour` et bouton `✕` mémorisant la version ignorée).
+  - Surveillance silencieuse en arrière-plan toutes les 60 secondes (premier check 1.5s après le démarrage) via `updater.check_for_updates()` avec communication thread-safe par signaux PyQt6 et 0% CPU au repos.
+  - Positionnement natif macOS (`NSStatusWindowLevel + 1`, `CanJoinAllSpaces`, `NonactivatingPanel`) centré sous la barre flottante Phoenix Pen (`y = 168`) pour zéro chevauchement avec Phoenix Voice et zéro vol de focus.
+  - Fiabilisation de `updater.restart_app()` : suppression propre des fichiers verrou/PID avant le lancement du nouveau processus (`start_new_session=True`) pour éviter toute auto-interruption avant le redémarrage.
+  - Élargissement de la barre flottante `FloatingHUD` (`600` -> `660 px` dynamiques) et du bouton `⚙️ Dashboard` (`126 px`, centrage exact via `self.hud.width()`) pour supprimer toute troncature visuelle.
+  - Intégration dans `python/main.py` et ajout des assertions automatisées dans `python/test_gui.py`.
+- **Raison / Contexte :** Demande directe d'Abdoulaye d'obtenir la même notification flottante automatique de mise à jour en 1 clic que dans Phoenix Voice.
+- **Impact & Validation :** Tous les tests (`test_core.py`, `test_full_flow.py`, `test_gui.py`) passent à 100%. Conformité stricte < 250 lignes validée sur l'ensemble des modules Python (`main.py` : 245 lignes, `update_hud.py` : 236 lignes).
+
 ### [2026-11-10] - Abdoulaye (adiagne) [via Atlas] - Encadré Vert Souverain & Emblème Blanc (Symétrie Totale Phoenix Voice) & Transfert GitHub PhoenixPerformance1
 - **Action :**
   - **Logo Phoenix Pen Déploiement Définitif (Encadré Vert & Emblème Blanc) :**

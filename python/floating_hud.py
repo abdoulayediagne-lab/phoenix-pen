@@ -51,7 +51,6 @@ class FloatingHUD(QFrame):
         self.setWindowFlags(flags)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setFixedHeight(48)
-        self.setFixedWidth(600)
         self.setStyleSheet("""
             FloatingHUD {
                 background-color: rgba(13, 15, 18, 245);
@@ -81,6 +80,7 @@ class FloatingHUD(QFrame):
                 background-color: rgba(255, 255, 255, 22);
                 color: #E5E7EB;
                 border: 1px solid rgba(255, 255, 255, 30);
+                padding: 4px 14px;
             }
             QPushButton#dashBtn:hover {
                 background-color: rgba(255, 255, 255, 45);
@@ -164,6 +164,7 @@ class FloatingHUD(QFrame):
         self.btn_dash = QPushButton("⚙️ Dashboard")
         self.btn_dash.setObjectName("dashBtn")
         self.btn_dash.setToolTip("Ouvrir les réglages Phoenix Pen")
+        self.btn_dash.setMinimumWidth(self.btn_dash.sizeHint().width() + 8)
         self.btn_dash.clicked.connect(self.on_dashboard)
         layout.addWidget(self.btn_dash)
 
@@ -172,6 +173,8 @@ class FloatingHUD(QFrame):
         self.btn_hide.setToolTip("Masquer la barre (Option+H ou Cmd+Shift+H)")
         self.btn_hide.clicked.connect(self._handle_hide)
         layout.addWidget(self.btn_hide)
+
+        self.setFixedWidth(max(660, self.sizeHint().width() + 24))
 
     def set_active_mode(self, mode: str) -> None:
         """Updates visual state of buttons based on current mode."""

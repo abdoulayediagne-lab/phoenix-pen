@@ -96,12 +96,20 @@ def restart_app() -> None:
         venv_py = os.path.join(BASE_DIR, ".venv", "bin", "python3")
         py_exec = venv_py if os.path.exists(venv_py) else sys.executable
 
-        # Stop old instances cleanly
-        subprocess.run(["pkill", "-f", "phoenix-pen.*main\\.py"], capture_output=True)
+        # Remove lock/PID files before spawning replacement so _enforce_single_instance succeeds
+        for fpath in ("/tmp/phoenix_pen.lock", "/tmp/phoenix_pen.pid"):
+            try:
+                if os.path.exists(fpath):
+                    os.remove(fpath)
+            except OSError:
+                pass
 
         env = os.environ.copy()
         env["PYTHONPATH"] = os.path.join(BASE_DIR, "python")
-        subprocess.Popen(["/usr/bin/arch", "-arm64", py_exec, main_py], cwd=BASE_DIR, env=env, close_fds=True)
+        subprocess.Popen(
+            ["/usr/bin/arch", "-arm64", py_exec, main_py],
+            cwd=BASE_DIR, env=env, start_new_session=True, close_fds=True
+        )
         os._exit(0)
     except Exception as e:
         print(f"[Updater] Erreur redémarrage: {e}")

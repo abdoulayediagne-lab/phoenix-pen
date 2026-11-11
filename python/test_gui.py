@@ -57,6 +57,18 @@ def test_gui_components():
     assert tray.toolTip().startswith("⚡ Phoenix Pen")
     print("  ✓ TrayApp verified.")
 
+    print("[TEST] Initializing UpdateHUD...")
+    from update_hud import UpdateHUD
+    update_hud = UpdateHUD()
+    update_hud.show_update("abc1234")
+    assert update_hud.isVisible()
+    update_hud.dismiss()
+    assert not update_hud.isVisible()
+    update_hud.show_update("abc1234")
+    assert not update_hud.isVisible(), "Dismissed version must stay hidden"
+    update_hud.stop()
+    print("  ✓ UpdateHUD verified.")
+
     print("🎉 ALL GUI COMPONENTS INITIALIZED SUCCESSFULLY!")
 
 

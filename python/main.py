@@ -22,6 +22,7 @@ from overlay_window import (
     MODE_CLICK_THROUGH, MODE_DRAW_FIXED, MODE_DRAW_VANISHING, MODE_ERASER, OverlayWindow
 )
 from tray_app import TrayApp
+from update_hud import UpdateHUD
 
 _LOCK_FILE = "/tmp/phoenix_pen.lock"
 _PID_FILE = "/tmp/phoenix_pen.pid"
@@ -93,8 +94,8 @@ class PhoenixPenApp:
         self.hotkeys.start()
 
         self.config_dialog: ConfigWindow = None
-        if open_dashboard_on_start or self.config_mgr.get("system", "open_dashboard_at_start", False):
-            self.open_config()
+        self.update_hud = UpdateHUD(); self.update_hud.start_watcher()
+        if open_dashboard_on_start or self.config_mgr.get("system", "open_dashboard_at_start", False): self.open_config()
 
     @property
     def overlay(self) -> OverlayWindow:
@@ -107,13 +108,9 @@ class PhoenixPenApp:
             try: ov.close()
             except Exception: pass
         self.overlays.clear()
-
         for s in QGuiApplication.screens():
             ov = OverlayWindow(self.config_mgr, target_screen=s)
-            ov.setGeometry(s.geometry())
-            ov.show()
-            ov._adapt_to_active_screen()
-            ov._set_native_click_through(True)
+            ov.setGeometry(s.geometry()); ov.show(); ov._adapt_to_active_screen(); ov._set_native_click_through(True)
             self.overlays.append(ov)
 
     def _position_hud(self) -> None:
@@ -123,7 +120,7 @@ class PhoenixPenApp:
         screen = QGuiApplication.primaryScreen()
         if screen:
             geom = screen.availableGeometry()
-            w = 560
+            w = self.hud.width()
             x = geom.x() + (geom.width() - w) // 2
             y = 112  # Perfectly spaced below Phoenix Voice (which sits at y=55..99)
             self.hud.move(x, y)
@@ -225,6 +222,7 @@ class PhoenixPenApp:
     def quit(self) -> None:
         print("[PhoenixPen] Shutting down...")
         self.hotkeys.stop()
+        self.update_hud.stop()
         for ov in self.overlays: ov.close()
         self.hud.close(); self.tray.hide()
         try: os.remove(_PID_FILE)
